@@ -71,6 +71,10 @@ pub struct Contract {
     //keeps track of all the token IDs for a given account
     pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<TokenId>>,
 
+    //keeps track of the number of tokens an owner owns
+    //for every series
+    pub owner_tokens_per_series: LookupMap<AccountId, LookupMap<SeriesId, u64>>,
+
     //keeps track of the metadata for the contract
     pub metadata: LazyOption<NFTContractMetadata>,
 }
@@ -84,6 +88,8 @@ pub enum StorageKey {
     SeriesByIdInner { account_id_hash: CryptoHash },
     TokensPerOwner,
     TokenPerOwnerInner { account_id_hash: CryptoHash },
+    OwnerTokensPerSeries,
+    OwnerTokensPerSeriesInner { account_id_hash: CryptoHash },
     TokensById,
     NFTContractMetadata,
 }
@@ -128,7 +134,7 @@ impl Contract {
         let mut approved_creators =
             LookupSet::new(StorageKey::ApprovedCreators.try_to_vec().unwrap());
         approved_creators.insert(&owner_id);
-        
+
         // Create a variable of type Self with all the fields initialized.
         let this = Self {
             approved_minters,
@@ -136,6 +142,9 @@ impl Contract {
             series_by_id: UnorderedMap::new(StorageKey::SeriesById.try_to_vec().unwrap()),
             //Storage keys are simply the prefixes used for the collections. This helps avoid data collision
             tokens_per_owner: LookupMap::new(StorageKey::TokensPerOwner.try_to_vec().unwrap()),
+            owner_tokens_per_series: LookupMap::new(
+                StorageKey::OwnerTokensPerSeries.try_to_vec().unwrap(),
+            ),
             tokens_by_id: UnorderedMap::new(StorageKey::TokensById.try_to_vec().unwrap()),
             //set the &owner_id field equal to the passed in owner_id.
             owner_id,

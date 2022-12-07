@@ -1,6 +1,5 @@
-use crate::*;
 use crate::nft_core::NonFungibleTokenCore;
-
+use crate::*;
 
 /// Struct to return in views to query for specific data related to a series
 #[derive(BorshDeserialize, BorshSerialize, Serialize)]
@@ -142,7 +141,7 @@ impl Contract {
         }
     }
 
-    /// Paginate through NFTs within a given series 
+    /// Paginate through NFTs within a given series
     pub fn nft_tokens_for_series(
         &self,
         id: u64,
@@ -171,5 +170,20 @@ impl Contract {
             .map(|token_id| self.nft_token(token_id.clone()).unwrap())
             //since we turned the keys into an iterator, we need to turn it back into a vector to return
             .collect()
+    }
+
+    //get the total supply of NFTs in a series for a given owner
+    pub fn series_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
+        let number_of_tokens_in_series_owned = self
+            .owner_tokens_per_series
+            .get(&account_id)
+            .expect("Owner does not have token in this series")
+            .get(&series_id)
+            .unwrap_or(0);
+        U128(number_of_tokens_in_series_owned.into())
+    }
+
+    pub fn badge_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
+        self.series_supply_for_owner(series_id, account_id)
     }
 }

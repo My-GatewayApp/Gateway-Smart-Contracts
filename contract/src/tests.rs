@@ -100,7 +100,9 @@ fn test_mint_badge() {
     assert_eq!(contract.nft_supply_for_owner(accounts(1)), 1.into());
 
     let nft = contract.nft_tokens_for_owner(accounts(1), None, None);
-    assert_eq!(nft[0].owner_id, accounts(1))
+    assert_eq!(nft[0].owner_id, accounts(1));
+    let badge_0_supply_for_owner = contract.badge_supply_for_owner(series_id, accounts(1));
+    assert_eq!(badge_0_supply_for_owner.0, 1u128);
 }
 
 #[test]

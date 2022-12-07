@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{nft_core::NonFungibleTokenCore, *};
 use near_sdk::CryptoHash;
 use std::mem::size_of;
 
@@ -65,7 +65,11 @@ pub(crate) fn assert_at_least_one_yocto() {
 }
 
 // Send all the non storage funds to the series owner
-pub(crate) fn payout_series_owner(storage_used: u64, price_per_token: Balance, owner_id: AccountId) {
+pub(crate) fn payout_series_owner(
+    storage_used: u64,
+    price_per_token: Balance,
+    owner_id: AccountId,
+) {
     //get how much it would cost to store the information
     let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
     //get the attached deposit
@@ -124,6 +128,8 @@ impl Contract {
         token_id: &TokenId,
     ) {
         //get the set of tokens for the given account
+        let token = self.nft_token(token_id.clone()).unwrap();
+
         let mut tokens_set = self.tokens_per_owner.get(account_id).unwrap_or_else(|| {
             //if the account doesn't have any tokens, we create a new unordered set
             UnorderedSet::new(
@@ -141,6 +147,21 @@ impl Contract {
 
         //we insert that set for the given account ID.
         self.tokens_per_owner.insert(account_id, &tokens_set);
+
+        //increase the count of user token in a series
+        let mut owner_tokens_per_series = self
+            .owner_tokens_per_series
+            .get(account_id)
+            .unwrap_or_else(|| {
+                LookupMap::new(StorageKey::OwnerTokensPerSeriesInner {
+                    account_id_hash: hash_account_id(&account_id.to_string()),
+                })
+            });
+
+        let current_count = owner_tokens_per_series.get(&token.series_id).unwrap_or(0);
+
+        owner_tokens_per_series.insert(&token.series_id, &(current_count + 1));
+        self.owner_tokens_per_series.insert(account_id, &owner_tokens_per_series);
     }
 
     //remove a token from an owner (internal method and can't be called directly via CLI).
@@ -149,6 +170,7 @@ impl Contract {
         account_id: &AccountId,
         token_id: &TokenId,
     ) {
+
         //we get the set of tokens that the owner has
         let mut tokens_set = self
             .tokens_per_owner
@@ -159,13 +181,21 @@ impl Contract {
         //we remove the the token_id from the set of tokens
         tokens_set.remove(token_id);
 
+        //update the number of tokens that the owner has in the current series
+        let token = self.nft_token(token_id.clone()).unwrap();
+        let mut current_owner_tokens_per_series = self.owner_tokens_per_series.get(&account_id).unwrap();
+        let current_series_count = current_owner_tokens_per_series.get(&token.series_id).unwrap();
+        current_owner_tokens_per_series.insert(&token.series_id, &(current_series_count - 1));
+    
         //if the token set is now empty, we remove the owner from the tokens_per_owner collection
         if tokens_set.is_empty() {
             self.tokens_per_owner.remove(account_id);
+            self.owner_tokens_per_series.remove(account_id);
         } else {
             //if the token set is not empty, we simply insert it back for the account ID.
             self.tokens_per_owner.insert(account_id, &tokens_set);
-        }
+            self.owner_tokens_per_series.insert(&account_id, &current_owner_tokens_per_series);
+         }
     }
 
     //transfers the NFT to the receiver_id (internal method and can't be called directly via CLI).

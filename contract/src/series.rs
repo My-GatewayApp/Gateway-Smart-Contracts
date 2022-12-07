@@ -197,6 +197,8 @@ impl Contract {
     /// The series ID must exist and if the metadata specifies a copy limit, you cannot exceed it.
     pub fn mint_badge(&mut self, id: U64, receiver_id: AccountId) {
         // self.only_contract_owner();
+        let initial_storage_usage = env::storage_usage();
+
 
         // Get the series and how many tokens currently exist (edition number = cur_len + 1)
         let mut series = self.series_by_id.get(&id.0).expect("Not a series");
@@ -252,10 +254,16 @@ impl Contract {
                 memo: None,
             }]),
         };
-
+        let current_storage = env::storage_usage();
+        let storage_used = current_storage - initial_storage_usage ;
+        let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
+        let required_cost = format!("{}", required_cost);
+        env::log_str(&required_cost);
         // Log the serialized json.
         env::log_str(&nft_mint_log.to_string());
     }
+
+
 
     // modifiers
 
