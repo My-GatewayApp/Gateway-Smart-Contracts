@@ -12,6 +12,7 @@ use near_sdk::serde::{Deserialize, Serialize};
 pub enum EventLogVariant {
     NftMint(Vec<NftMintLog>),
     NftTransfer(Vec<NftTransferLog>),
+    NftBurn(Vec<NftBurnLog>),
 }
 
 /// Interface to capture data about an event
@@ -56,6 +57,17 @@ pub struct NftMintLog {
     pub memo: Option<String>,
 }
 
+/// An event log to capture token burning
+///
+/// Arguments
+/// * `owner_id`: "account.near"
+/// * `token_ids`: ["1", "abc"]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "near_sdk::serde")]
+pub struct NftBurnLog {
+    pub owner_id: String,
+    pub token_ids: Vec<String>,
+}
 /// An event log to capture token transfer
 ///
 /// Arguments

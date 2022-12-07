@@ -16,6 +16,7 @@ pub use crate::nft_core::*;
 pub use crate::owner::*;
 pub use crate::royalty::*;
 pub use crate::series::*;
+pub use crate::burn::*;
 
 mod approval;
 mod enumeration;
@@ -26,7 +27,7 @@ mod nft_core;
 mod owner;
 mod royalty;
 mod series;
-
+mod burn;
 /// This spec can be treated like a version of the standard.
 pub const NFT_METADATA_SPEC: &str = "1.0.0";
 /// This is the name of the NFT standard we're using

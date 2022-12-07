@@ -266,7 +266,6 @@ impl Contract {
 
 
     // modifiers
-
     fn only_contract_owner(&mut self) {
         assert_eq!(
             env::signer_account_id(),
