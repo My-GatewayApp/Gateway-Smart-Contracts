@@ -80,7 +80,6 @@ fn test_create_badge_with_wrong_acct_collection() {
     let token_metadata: TokenMetadata = sample_token_metadata();
     testing_env!(context.predecessor_account_id(accounts(1)).build());
     contract.create_badge_collection(series_id, token_metadata, None, None);
-
 }
 #[test]
 fn test_mint_badge() {
@@ -103,6 +102,10 @@ fn test_mint_badge() {
     assert_eq!(nft[0].owner_id, accounts(1));
     let badge_0_supply_for_owner = contract.badge_supply_for_owner(series_id, accounts(1));
     assert_eq!(badge_0_supply_for_owner.0, 1u128);
+
+    let owner_badges_in_collection =
+        contract.nft_tokens_for_badges(series_id, accounts(1), None, None);
+    assert_eq!(owner_badges_in_collection.len(), 1);
 }
 
 #[test]

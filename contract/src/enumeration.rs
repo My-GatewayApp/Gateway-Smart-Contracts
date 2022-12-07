@@ -168,10 +168,46 @@ impl Contract {
             .take(limit.unwrap_or(50) as usize)
             //we'll map the token IDs which are strings into Json Tokens
             .map(|token_id| self.nft_token(token_id.clone()).unwrap())
-            //since we turned the keys into an iterator, we need to turn it back into a vector to return
             .collect()
     }
 
+    /// Paginate through NFTs within a given series
+    pub fn nft_tokens_for_badges(
+        &self,
+        series_id: u64,
+        account_id: AccountId,
+        from_index: Option<U128>,
+        limit: Option<u64>,
+    ) -> Vec<JsonToken> {
+        self.owner_nft_tokens_for_series(series_id, account_id, from_index, limit)
+    }
+    /// Paginate through NFTs within a given series
+    pub fn owner_nft_tokens_for_series(
+        &self,
+        series_id: u64,
+        account_id: AccountId,
+        from_index: Option<U128>,
+        limit: Option<u64>,
+    ) -> Vec<JsonToken> {
+        let tokens_for_owner_set = self.tokens_per_owner.get(&account_id);
+        
+        let start = u128::from(from_index.unwrap_or(U128(0)));
+        //if there is some set of tokens, we'll return the length as a U128
+        if let Some(tokens_for_owner_set) = tokens_for_owner_set {
+            let tokens = tokens_for_owner_set
+                .iter()
+                .map(|token_id| self.nft_token(token_id.clone()).unwrap())
+                .filter(|token| token.series_id == series_id)
+                .skip(start as usize)
+                //take the first "limit" elements in the vector. If we didn't specify a limit, use 50
+                .take(limit.unwrap_or(50) as usize)    
+                .collect();
+            tokens
+        } else {
+            //if there isn't a set of tokens for the passed in account ID, we'll return 0
+            vec![]
+        }
+    }
     //get the total supply of NFTs in a series for a given owner
     pub fn series_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
         let number_of_tokens_in_series_owned = self
