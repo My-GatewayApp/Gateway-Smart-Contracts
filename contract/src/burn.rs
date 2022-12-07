@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{nft_core::NonFungibleTokenCore, *};
 
 /// CUSTOM - owner can burn a locked token for a given user, reducing the enumerable->nft_supply_for_type
 #[near_bindgen]
@@ -30,5 +30,26 @@ impl Contract {
             }]),
         };
         env::log_str(&nft_burn_log.to_string());
+    }
+
+    pub fn series_batch_burn(&mut self, series_id: SeriesId,limit: Option<u64> ){
+        let owner_id = env::predecessor_account_id();
+        let tokens_for_owner_set = self.tokens_per_owner.get(&owner_id);
+        
+        let tokens_to_burn = if let Some(tokens_for_owner_set) = tokens_for_owner_set {
+            let tokens = tokens_for_owner_set
+                .iter()
+                .map(|token_id| self.nft_token(token_id.clone()).unwrap())
+                .filter(|token| token.series_id == series_id)
+                .take(limit.unwrap_or(50) as usize)    
+                .collect();
+            tokens
+        } else {
+            vec![]
+        };
+
+        for token in tokens_to_burn {
+            self.nft_burn(token.token_id)
+        }
     }
 }
