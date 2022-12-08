@@ -9,6 +9,7 @@ use near_sdk::{
 use std::collections::HashMap;
 
 pub use crate::approval::*;
+pub use crate::burn::*;
 pub use crate::events::*;
 use crate::internal::*;
 pub use crate::metadata::*;
@@ -16,9 +17,9 @@ pub use crate::nft_core::*;
 pub use crate::owner::*;
 pub use crate::royalty::*;
 pub use crate::series::*;
-pub use crate::burn::*;
 
 mod approval;
+mod burn;
 mod enumeration;
 mod events;
 mod internal;
@@ -27,7 +28,6 @@ mod nft_core;
 mod owner;
 mod royalty;
 mod series;
-mod burn;
 /// This spec can be treated like a version of the standard.
 pub const NFT_METADATA_SPEC: &str = "1.0.0";
 /// This is the name of the NFT standard we're using
@@ -47,9 +47,35 @@ pub struct Series {
     price: Option<Balance>,
     // Owner of the collection
     owner_id: AccountId,
+    series_type: SeriesType,
 }
 
 pub type SeriesId = u64;
+
+#[derive(BorshSerialize, BorshDeserialize, )]
+pub enum SeriesType {
+    Default = 1, //1
+    Custom = 2, //2
+}
+
+
+impl SeriesType {
+    pub fn to_code(&self) -> u8 {
+        match self {
+            SeriesType::Default => 1,
+            SeriesType::Custom => 2,
+        }
+    }
+
+    pub fn from(val: u8) -> SeriesType {
+        match val {
+            1 => (SeriesType::Default),
+            2 => (SeriesType::Custom),
+            _ => panic!("Invalid Series Type"),
+        }
+    }
+}
+
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]

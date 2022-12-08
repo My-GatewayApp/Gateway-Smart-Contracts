@@ -11,6 +11,7 @@ impl Contract {
     #[private]
     pub fn create_badge_collection(
         &mut self,
+        series_type: u8,
         metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
         price: Option<U128>,
@@ -39,6 +40,7 @@ impl Contract {
                         }),
                         owner_id: caller,
                         price: price.map(|p| p.into()),
+                        series_type:  SeriesType::from(series_type)
                     }
                 )
                 .is_none(),
@@ -54,7 +56,7 @@ impl Contract {
     #[payable]
     pub fn create_series(
         &mut self,
-        id: u64,
+        series_type: u8,
         metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
         price: Option<U128>,
@@ -68,21 +70,23 @@ impl Contract {
             self.approved_creators.contains(&caller) == true,
             "only approved creators can add a type"
         );
+        let new_series_id = self.series_by_id.len() + 1;
 
         // Insert the series and ensure it doesn't already exist
         require!(
             self.series_by_id
                 .insert(
-                    &id,
+                    &new_series_id,
                     &Series {
                         metadata,
                         royalty,
                         tokens: UnorderedSet::new(StorageKey::SeriesByIdInner {
                             // We get a new unique prefix for the collection
-                            account_id_hash: hash_account_id(&format!("{}{}", id, caller)),
+                            account_id_hash: hash_account_id(&format!("{}{}", new_series_id, caller)),
                         }),
                         owner_id: caller,
                         price: price.map(|p| p.into()),
+                        series_type:  SeriesType::from(series_type)
                     }
                 )
                 .is_none(),

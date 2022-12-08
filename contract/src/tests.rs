@@ -64,7 +64,7 @@ fn test_create_badge_collection() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
     let created_series = contract.get_series_details(series_id).unwrap();
     // println!("{:?}", );
     assert_eq!(created_series.series_id, series_id);
@@ -80,7 +80,7 @@ fn test_create_badge_with_wrong_acct_collection() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
     testing_env!(context.predecessor_account_id(accounts(1)).build());
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
 }
 #[test]
 fn test_mint_badge() {
@@ -92,7 +92,7 @@ fn test_mint_badge() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -120,7 +120,7 @@ fn test_burn_badge_with_wrong_owner() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -144,7 +144,7 @@ fn test_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -177,7 +177,7 @@ fn test_batch_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
     contract.mint_badge(series_id.into(), accounts(1));
@@ -213,7 +213,7 @@ pub fn test_update_series_media() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(token_metadata, None, None);
+    contract.create_badge_collection(1,token_metadata, None, None);
     let created_series = contract.get_series_details(series_id).unwrap();
     // println!("{:?}", );
     assert_eq!(created_series.series_id, series_id);
