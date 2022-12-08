@@ -64,7 +64,7 @@ fn test_create_badge_collection() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
     let created_series = contract.get_series_details(series_id).unwrap();
     // println!("{:?}", );
     assert_eq!(created_series.series_id, series_id);
@@ -77,10 +77,10 @@ fn test_create_badge_with_wrong_acct_collection() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
     let mut contract = Contract::new_default_meta(accounts(0).into());
-    let series_id = 1;
+
     let token_metadata: TokenMetadata = sample_token_metadata();
     testing_env!(context.predecessor_account_id(accounts(1)).build());
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
 }
 #[test]
 fn test_mint_badge() {
@@ -92,7 +92,7 @@ fn test_mint_badge() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -120,7 +120,7 @@ fn test_burn_badge_with_wrong_owner() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -144,7 +144,7 @@ fn test_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -177,7 +177,7 @@ fn test_batch_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
     contract.mint_badge(series_id.into(), accounts(1));
@@ -213,7 +213,7 @@ pub fn test_update_series_media() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection(1,token_metadata, None, None);
+    contract.create_badge_collection(1, token_metadata, None, None);
     let created_series = contract.get_series_details(series_id).unwrap();
     // println!("{:?}", );
     assert_eq!(created_series.series_id, series_id);
@@ -231,4 +231,38 @@ pub fn test_update_series_media() {
 
     assert_eq!(series.metadata.media, Some(new_media_string));
     assert_eq!(series.metadata.media_hash, Some(new_media_hash.clone()));
+}
+
+#[test]
+#[should_panic(expected = "Invalid badge type")]
+fn test_fail_get_badge_series_by_type() {
+    let mut context = get_context(accounts(0));
+    testing_env!(context.build());
+    let mut contract = Contract::new_default_meta(accounts(0).into());
+
+    testing_env!(context.predecessor_account_id(accounts(0)).build());
+
+    let token_metadata: TokenMetadata = sample_token_metadata();
+
+    let series_type = 3u8;
+    contract.create_badge_collection(series_type, token_metadata, None, None);
+}
+#[test]
+fn test_get_badge_series_by_type() {
+    let mut context = get_context(accounts(0));
+    testing_env!(context.build());
+    let mut contract = Contract::new_default_meta(accounts(0).into());
+
+    testing_env!(context.predecessor_account_id(accounts(0)).build());
+
+    let token_metadata: TokenMetadata = sample_token_metadata();
+
+    contract.create_badge_collection(1u8, token_metadata.clone(), None, None);
+    contract.create_badge_collection(2u8, token_metadata, None, None);
+
+    let series_1 = contract.get_badge_series_by_type(1);
+    let series_2 = contract.get_badge_series_by_type(2);
+
+    assert_eq!(series_1.len(), 1);
+    assert_eq!(series_2.len(), 1);
 }

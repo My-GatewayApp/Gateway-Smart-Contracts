@@ -12,6 +12,8 @@ pub struct JsonSeries {
     pub royalty: Option<HashMap<AccountId, u32>>,
     // Owner of the collection
     pub owner_id: AccountId,
+    //Type of the collection
+    pub badge_type: u8,
 }
 
 #[near_bindgen]
@@ -121,6 +123,7 @@ impl Contract {
                 metadata: series.metadata,
                 royalty: series.royalty,
                 owner_id: series.owner_id,
+                badge_type: series.badge_type.to_code()
             })
         } else {
             //if there isn't a series, we'll return None
@@ -222,4 +225,18 @@ impl Contract {
     pub fn badge_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
         self.series_supply_for_owner(series_id, account_id)
     }
+
+    // Paginate through all the series on the contract and return the a vector of JsonSeries
+    pub fn get_badge_series_by_type(&self, badge_type: u8,) -> Vec<JsonSeries> {
+
+        //iterate through each series using an iterator
+        self.series_by_id
+            .keys()
+            //we'll map the series IDs which are strings into Json Series
+            .map(|series_id| self.get_series_details(series_id.clone()).unwrap())
+            .filter(|series| series.badge_type == badge_type)
+            //since we turned the keys into an iterator, we need to turn it back into a vector to return
+            .collect()
+    }
+
 }

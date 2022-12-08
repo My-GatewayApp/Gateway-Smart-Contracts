@@ -47,7 +47,7 @@ pub struct Series {
     price: Option<Balance>,
     // Owner of the collection
     owner_id: AccountId,
-    series_type: SeriesType,
+    badge_type: SeriesType,
 }
 
 pub type SeriesId = u64;
