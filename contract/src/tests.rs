@@ -3,7 +3,8 @@ use crate::approval::NonFungibleTokenCore;
 #[cfg(test)]
 use crate::Contract;
 use crate::TokenMetadata;
-use near_sdk::json_types::{U128, U64};
+use near_sdk::base64::encode;
+use near_sdk::json_types::{Base64VecU8, U128, U64};
 use near_sdk::test_utils::{accounts, VMContextBuilder};
 use near_sdk::testing_env;
 use near_sdk::{env, AccountId};
@@ -63,7 +64,7 @@ fn test_create_badge_collection() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
     let created_series = contract.get_series_details(series_id).unwrap();
     // println!("{:?}", );
     assert_eq!(created_series.series_id, series_id);
@@ -79,7 +80,7 @@ fn test_create_badge_with_wrong_acct_collection() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
     testing_env!(context.predecessor_account_id(accounts(1)).build());
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
 }
 #[test]
 fn test_mint_badge() {
@@ -91,7 +92,7 @@ fn test_mint_badge() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -119,7 +120,7 @@ fn test_burn_badge_with_wrong_owner() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -143,7 +144,7 @@ fn test_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
 
@@ -176,7 +177,7 @@ fn test_batch_burn() {
     let series_id = 1;
     let token_metadata: TokenMetadata = sample_token_metadata();
 
-    contract.create_badge_collection( token_metadata, None, None);
+    contract.create_badge_collection(token_metadata, None, None);
 
     contract.mint_badge(series_id.into(), accounts(1));
     contract.mint_badge(series_id.into(), accounts(1));
@@ -200,4 +201,34 @@ fn test_batch_burn() {
 
     let nft = contract.nft_tokens_for_owner(accounts(1), None, None);
     assert_eq!(nft.len(), 0);
+}
+
+#[test]
+pub fn test_update_series_media() {
+    let mut context = get_context(accounts(0));
+    testing_env!(context.build());
+    let mut contract = Contract::new_default_meta(accounts(0).into());
+
+    testing_env!(context.predecessor_account_id(accounts(0)).build());
+    let series_id = 1;
+    let token_metadata: TokenMetadata = sample_token_metadata();
+
+    contract.create_badge_collection(token_metadata, None, None);
+    let created_series = contract.get_series_details(series_id).unwrap();
+    // println!("{:?}", );
+    assert_eq!(created_series.series_id, series_id);
+    assert_eq!(created_series.owner_id, accounts(0));
+    let new_media_string = "https://images.com/1.png".to_string();
+    //we'll usually use file hash and not url hash
+    let new_media_hash = Base64VecU8::from(env::sha256(format!("{}", new_media_string).as_bytes()));
+
+    contract.update_series_media(
+        series_id.into(),
+        Some(new_media_string.clone()),
+        Some(new_media_hash.clone()),
+    );
+    let series = contract.get_series_details(series_id).unwrap();
+
+    assert_eq!(series.metadata.media, Some(new_media_string));
+    assert_eq!(series.metadata.media_hash, Some(new_media_hash.clone()));
 }

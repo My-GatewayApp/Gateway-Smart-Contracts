@@ -15,7 +15,6 @@ impl Contract {
         royalty: Option<HashMap<AccountId, u32>>,
         price: Option<U128>,
     ) {
-
         // Ensure the caller is an approved creator
         let caller = env::predecessor_account_id();
         require!(
@@ -33,7 +32,10 @@ impl Contract {
                         royalty,
                         tokens: UnorderedSet::new(StorageKey::SeriesByIdInner {
                             // We get a new unique prefix for the collection
-                            account_id_hash: hash_account_id(&format!("{}{}", new_series_id, caller)),
+                            account_id_hash: hash_account_id(&format!(
+                                "{}{}",
+                                new_series_id, caller
+                            )),
                         }),
                         owner_id: caller,
                         price: price.map(|p| p.into()),
@@ -42,8 +44,7 @@ impl Contract {
                 .is_none(),
             "collection ID already exists"
         );
-
-   }
+    }
 
     /// Create a new series. The caller must be an approved creator. All tokens in the series will inherit the same metadata
     /// If copies are set in the metadata, it will enforce that only that number of NFTs can be minted. If not, unlimited NFTs can be minted.
@@ -56,7 +57,7 @@ impl Contract {
         id: u64,
         metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
-        price: Option<U128>
+        price: Option<U128>,
     ) {
         // Measure the initial storage being used on the contract
         let initial_storage_usage = env::storage_usage();
@@ -78,10 +79,7 @@ impl Contract {
                         royalty,
                         tokens: UnorderedSet::new(StorageKey::SeriesByIdInner {
                             // We get a new unique prefix for the collection
-                            account_id_hash: hash_account_id(&format!(
-                                "{}{}",
-                                id, caller
-                            )),
+                            account_id_hash: hash_account_id(&format!("{}{}", id, caller)),
                         }),
                         owner_id: caller,
                         price: price.map(|p| p.into()),
@@ -98,7 +96,27 @@ impl Contract {
         refund_deposit(required_storage_in_bytes);
     }
 
-   /// Mint a new NFT that is part of a series. The caller must be an approved minter.
+    pub fn update_series_media(
+        &mut self,
+        series_id: U64,
+        media: Option<String>,
+        media_hash: Option<Base64VecU8>,
+    ) {
+        // Ensure the caller is an approved creator
+        let caller = env::predecessor_account_id();
+        require!(
+            self.approved_creators.contains(&caller) == true,
+            "only approved creators can add a type"
+        );
+
+        // Get the series 
+        let mut series = self.series_by_id.get(&series_id.0).expect("Not a series");
+        series.metadata.media = media;
+        series.metadata.media_hash = media_hash;
+        
+        self.series_by_id.insert(&series_id.0,& series);
+    }
+    /// Mint a new NFT that is part of a series. The caller must be an approved minter.
     /// The series ID must exist and if the metadata specifies a copy limit, you cannot exceed it.
     #[payable]
     pub fn nft_mint(&mut self, id: U64, receiver_id: AccountId) {
@@ -198,7 +216,6 @@ impl Contract {
         // self.only_contract_owner();
         let initial_storage_usage = env::storage_usage();
 
-
         // Get the series and how many tokens currently exist (edition number = cur_len + 1)
         let mut series = self.series_by_id.get(&id.0).expect("Not a series");
 
@@ -254,15 +271,13 @@ impl Contract {
             }]),
         };
         let current_storage = env::storage_usage();
-        let storage_used = current_storage - initial_storage_usage ;
+        let storage_used = current_storage - initial_storage_usage;
         let required_cost = env::storage_byte_cost() * Balance::from(storage_used);
         let required_cost = format!("{}", required_cost);
         env::log_str(&required_cost);
         // Log the serialized json.
         env::log_str(&nft_mint_log.to_string());
     }
-
-
 
     // modifiers
     fn only_contract_owner(&mut self) {
