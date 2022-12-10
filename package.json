@@ -8,11 +8,13 @@
     "build:contract": "cd contract && ./build.sh",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "cd contract && cargo test",
-    "test:integration": "cd integration-tests && npm test -- -- \"./contract/target/wasm32-unknown-unknown/release/hello_near.wasm\"",
+    "test:integration": "cd integration-tests && npm test -- -- \"./out/gateway_nft_marketplace.wasm\"",
     "postinstall": "echo no frontend && cd integration-tests && npm install && cd .. && echo rs contract"
   },
   "devDependencies": {
     "near-cli": "^3.3.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "crypto-js": "^4.1.1"
+  }
 }

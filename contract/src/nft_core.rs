@@ -196,7 +196,6 @@ impl NonFungibleTokenCore for Contract {
 impl NonFungibleTokenResolver for Contract {
     //resolves the cross contract call when calling nft_on_transfer in the nft_transfer_call method
     //returns true if the token was successfully transferred to the receiver_id
-    #[private]
     fn nft_resolve_transfer(
         &mut self,
         //we introduce an authorized ID for logging the transfer event

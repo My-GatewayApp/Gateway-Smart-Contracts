@@ -52,12 +52,11 @@ pub struct Series {
 
 pub type SeriesId = u64;
 
-#[derive(BorshSerialize, BorshDeserialize, )]
+#[derive(BorshSerialize, BorshDeserialize)]
 pub enum SeriesType {
     Default = 1, //1
-    Custom = 2, //2
+    Custom = 2,  //2
 }
-
 
 impl SeriesType {
     pub fn to_code(&self) -> u8 {
@@ -76,12 +75,14 @@ impl SeriesType {
     }
 }
 
-
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     //contract owner
     pub owner_id: AccountId,
+
+    //contract owner public key
+    pub owner_public_key: String,
 
     //approved minters
     pub approved_minters: LookupSet<AccountId>,
@@ -104,6 +105,9 @@ pub struct Contract {
 
     //keeps track of the metadata for the contract
     pub metadata: LazyOption<NFTContractMetadata>,
+
+    // map of nonces used to prevent replay attack;
+    pub nonces: LookupMap<AccountId, u64>,
 }
 
 /// Helper structure for keys of the persistent collections.
@@ -119,6 +123,7 @@ pub enum StorageKey {
     OwnerTokensPerSeriesInner { account_id_hash: CryptoHash },
     TokensById,
     NFTContractMetadata,
+    Nonces
 }
 
 #[near_bindgen]
@@ -129,14 +134,20 @@ impl Contract {
         user doesn't have to manually type metadata.
     */
     #[init]
-    pub fn new_default_meta(owner_id: AccountId) -> Self {
+    pub fn new_default_meta(owner_id: AccountId, owner_public_key: String) -> Self {
         //calls the other function "new: with some default metadata and the owner_id passed in
+
+        
+        // let msg = format!("owner pub key: {:?}", owner_public_key);
+        // env::log_str(&msg);
+
         Self::new(
             owner_id,
+            owner_public_key,
             NFTContractMetadata {
                 spec: "nft-1.0.0".to_string(),
-                name: "NFT Series Contract".to_string(),
-                symbol: "GOTEAM".to_string(),
+                name: "Gateway APP NFTs".to_string(),
+                symbol: "GATEWAY".to_string(),
                 icon: None,
                 base_uri: None,
                 reference: None,
@@ -151,7 +162,11 @@ impl Contract {
         the owner_id.
     */
     #[init]
-    pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
+    pub fn new(
+        owner_id: AccountId,
+        owner_public_key: String,
+        metadata: NFTContractMetadata,
+    ) -> Self {
         // Create the approved minters set and insert the owner
         let mut approved_minters =
             LookupSet::new(StorageKey::ApprovedMinters.try_to_vec().unwrap());
@@ -175,10 +190,13 @@ impl Contract {
             tokens_by_id: UnorderedMap::new(StorageKey::TokensById.try_to_vec().unwrap()),
             //set the &owner_id field equal to the passed in owner_id.
             owner_id,
+            owner_public_key,
             metadata: LazyOption::new(
                 StorageKey::NFTContractMetadata.try_to_vec().unwrap(),
                 Some(&metadata),
             ),
+            nonces: LookupMap::new(StorageKey::Nonces.try_to_vec().unwrap()),
+
         };
 
         //return the Contract object

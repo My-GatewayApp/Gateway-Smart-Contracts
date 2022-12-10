@@ -1,6 +1,5 @@
 use crate::nft_core::NonFungibleTokenCore;
 use crate::*;
-
 /// Struct to return in views to query for specific data related to a series
 #[derive(BorshDeserialize, BorshSerialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -123,7 +122,7 @@ impl Contract {
                 metadata: series.metadata,
                 royalty: series.royalty,
                 owner_id: series.owner_id,
-                badge_type: series.badge_type.to_code()
+                badge_type: series.badge_type.to_code(),
             })
         } else {
             //if there isn't a series, we'll return None
@@ -193,7 +192,7 @@ impl Contract {
         limit: Option<u64>,
     ) -> Vec<JsonToken> {
         let tokens_for_owner_set = self.tokens_per_owner.get(&account_id);
-        
+
         let start = u128::from(from_index.unwrap_or(U128(0)));
         //if there is some set of tokens, we'll return the length as a U128
         if let Some(tokens_for_owner_set) = tokens_for_owner_set {
@@ -203,7 +202,7 @@ impl Contract {
                 .filter(|token| token.series_id == series_id)
                 .skip(start as usize)
                 //take the first "limit" elements in the vector. If we didn't specify a limit, use 50
-                .take(limit.unwrap_or(50) as usize)    
+                .take(limit.unwrap_or(50) as usize)
                 .collect();
             tokens
         } else {
@@ -212,7 +211,7 @@ impl Contract {
         }
     }
     //get the total supply of NFTs in a series for a given owner
-    pub fn series_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
+    pub fn series_token_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
         let number_of_tokens_in_series_owned = self
             .owner_tokens_per_series
             .get(&account_id)
@@ -222,13 +221,12 @@ impl Contract {
         U128(number_of_tokens_in_series_owned.into())
     }
 
-    pub fn badge_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
-        self.series_supply_for_owner(series_id, account_id)
+    pub fn badge_token_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
+        self.series_token_supply_for_owner(series_id, account_id)
     }
 
     // Paginate through all the series on the contract and return the a vector of JsonSeries
-    pub fn get_badge_series_by_type(&self, badge_type: u8,) -> Vec<JsonSeries> {
-
+    pub fn get_badge_series_by_type(&self, badge_type: u8) -> Vec<JsonSeries> {
         //iterate through each series using an iterator
         self.series_by_id
             .keys()
@@ -239,4 +237,10 @@ impl Contract {
             .collect()
     }
 
+    pub fn get_nonce(&self, account_id: &AccountId) -> u64 {
+        self.nonces.get(&account_id).unwrap_or(0)
+    }
+    pub fn owner_public_key(&self) -> String {
+        self.owner_public_key.clone()
+    }
 }
