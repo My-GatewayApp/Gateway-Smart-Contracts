@@ -49,7 +49,17 @@ fn test_new_account_contract() {
     let contract_nft_tokens = contract.nft_tokens(Some(U128(0)), None);
     assert_eq!(contract_nft_tokens.len(), 0);
 }
+#[test]            
+#[should_panic(expected = "only approved creators can add a new badge collection")]
+fn test_create_badge_with_wrong_acct_collection() {
+    let mut context = get_context(accounts(0));
+    testing_env!(context.build());
+    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
 
+    let token_metadata: TokenMetadata = sample_token_metadata();
+    testing_env!(context.predecessor_account_id(accounts(1)).build());
+    contract.create_badge_collection(1, token_metadata, None, None);
+}
 #[test]
 fn test_create_badge_collection() {
     let mut context = get_context(accounts(0));
@@ -67,17 +77,7 @@ fn test_create_badge_collection() {
     assert_eq!(created_series.owner_id, accounts(0))
 }
 
-#[test]
-#[should_panic(expected = "only approved creators can add a type")]
-fn test_create_badge_with_wrong_acct_collection() {
-    let mut context = get_context(accounts(0));
-    testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
 
-    let token_metadata: TokenMetadata = sample_token_metadata();
-    testing_env!(context.predecessor_account_id(accounts(1)).build());
-    contract.create_badge_collection(1, token_metadata, None, None);
-}
 #[test]
 fn test_mint_badge() {
     let mut context = get_context(accounts(0));
@@ -101,7 +101,7 @@ fn test_mint_badge() {
     assert_eq!(badge_0_supply_for_owner.0, 1u128);
 
     let owner_badges_in_collection =
-        contract.nft_tokens_for_badges(series_id, accounts(1), None, None);
+        contract.owner_nft_tokens_for_badges(series_id, accounts(1), None, None);
     assert_eq!(owner_badges_in_collection.len(), 1);
 }
 
@@ -154,7 +154,7 @@ fn test_burn() {
     assert_eq!(badge_0_supply_for_owner.0, 1u128);
 
     let owner_badges_in_collection =
-        contract.nft_tokens_for_badges(series_id, accounts(1), None, None);
+        contract.owner_nft_tokens_for_badges(series_id, accounts(1), None, None);
     assert_eq!(owner_badges_in_collection.len(), 1);
 
     testing_env!(context.predecessor_account_id(accounts(1)).build());
@@ -189,11 +189,11 @@ fn test_batch_burn() {
     assert_eq!(badge_0_supply_for_owner.0, 3u128);
 
     let owner_badges_in_collection =
-        contract.nft_tokens_for_badges(series_id, accounts(1), None, None);
+        contract.owner_nft_tokens_for_badges(series_id, accounts(1), None, None);
     assert_eq!(owner_badges_in_collection.len(), 3);
 
     testing_env!(context.predecessor_account_id(accounts(1)).build());
-    contract.series_batch_burn(series_id, None);
+    contract.batch_burn(series_id, None);
 
     let nft = contract.nft_tokens_for_owner(accounts(1), None, None);
     assert_eq!(nft.len(), 0);

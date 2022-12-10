@@ -22,7 +22,7 @@ impl Contract {
         let caller = env::predecessor_account_id();
         require!(
             self.approved_creators.contains(&caller) == true,
-            "only approved creators can add a type"
+            "only approved creators can add a new badge collection"
         );
         require!(badge_type <= 2, "Invalid badge type");
         let new_series_id = self.series_by_id.len() + 1;
@@ -71,7 +71,7 @@ impl Contract {
         let caller = env::predecessor_account_id();
         require!(
             self.approved_creators.contains(&caller) == true,
-            "only approved creators can add a type"
+            "only approved creators can add a new badge collection"
         );
         let new_series_id = self.series_by_id.len() + 1;
 

@@ -54,31 +54,29 @@ export async function authorizedNFTMint(
     contract: NearAccount,
     seriesId: string,
 ) {
-//get current user nonce
-const nonce = await contract.call(contract, "get_nonce", {
-    account_id: user.accountId
-  });
+    //get current user nonce
+    const nonce = await contract.call(contract, "get_nonce", {
+        account_id: user.accountId
+    });
 
 
-  //sign nonce using alice account(admin)
-  const nextNonce: number = parseInt(nonce as any) + 1
-  const hash = createHash('sha256');
+    //sign nonce using alice account(admin)
+    const nextNonce: number = parseInt(nonce as any) + 1
+    const hash = createHash('sha256');
 
-  const keyPair = await root.getKey();
-
-
-  const message = nextNonce;
-  hash.update(message.toString())
-  const hashedMessage = hash.digest()
-  const signedMessage = keyPair?.sign(hashedMessage);
-
-  // try to mint nft using wrong permission 
-  //make an authorized mint
-  return await user.callRaw(contract, "mint_badge", {
-    id: seriesId,
-    receiver_id: user.accountId,
-    signature: Array.from(signedMessage!.signature)
-  })
+    const keyPair = await root.getKey();
 
 
+    const message = nextNonce;
+    hash.update(message.toString())
+    const hashedMessage = hash.digest()
+    const signedMessage = keyPair?.sign(hashedMessage);
+
+    // try to mint nft using wrong permission 
+    //make an authorized mint
+    return await user.callRaw(contract, "mint_badge", {
+        id: seriesId,
+        receiver_id: user.accountId,
+        signature: Array.from(signedMessage!.signature)
+    })
 }

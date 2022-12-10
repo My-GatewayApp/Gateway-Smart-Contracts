@@ -105,14 +105,17 @@ test('should create a new badge collection', async (t) => {
       badge_type: 1
     }
   ]
-  const series = await root.view("get_series");
 
+  const series: any = await root.view("get_series");
 
   t.deepEqual(
     series,
     expected
   );
 
+  t.assert(series.length === 1);
+  t.assert(series[0].series_id === 1);
+  t.assert(series[0].owner_id === contract.accountId);
 
 })
 
@@ -157,13 +160,67 @@ test('should allow authorized nft mint', async (t) => {
 
   await createBadgeCollection(root, contract)
 
-  const seriesId = "1";
 
   await authorizedNFTMint(
     root,
     alice,
-    contract, seriesId,
+    contract, "1",
   )
 
-    
+  const nftTotalSupply = await contract.view("nft_total_supply")
+  const nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
+    account_id: alice.accountId,
+  })
+  const newBadgeTotalSupply = await contract.view("nft_supply_for_series", {
+    id: 1
+  })
+
+  const badgeTokenSupplyForOwner = await contract.view("badge_token_supply_for_owner", {
+    series_id: 1,
+    account_id: alice.accountId,
+  })
+
+  t.assert(nftSupplyForOwner, "1")
+  t.assert(badgeTokenSupplyForOwner, "1")
+  t.assert(nftTotalSupply == "1")
+  t.assert(newBadgeTotalSupply == "1")
+})
+
+test("should burn nft ", async (t) => {
+  const { root, contract, alice } = t.context.accounts;
+
+  await createBadgeCollection(root, contract)
+
+
+  await authorizedNFTMint(
+    root,
+    alice,
+    contract,
+    "1",
+  )
+  const aliceNFTs: any = await contract.view("nft_tokens_for_owner", {
+    account_id: alice.accountId,
+  })
+
+  await alice.call(contract, "nft_burn", {
+    token_id: aliceNFTs[0].token_id,
+  })
+
+
+  const nftTotalSupply = await contract.view("nft_total_supply")
+  const nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
+    account_id: alice.accountId,
+  })
+  const newBadgeTotalSupply = await contract.view("nft_supply_for_series", {
+    id: 1
+  })
+
+  t.assert(nftSupplyForOwner, "0")
+  t.assert(nftTotalSupply == "0")
+  t.assert(newBadgeTotalSupply == "0")
+
+})
+
+test("supply burn nft in batches", async (t) => {
+
 })

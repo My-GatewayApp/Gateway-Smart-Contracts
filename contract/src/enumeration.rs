@@ -174,7 +174,7 @@ impl Contract {
     }
 
     /// Paginate through NFTs within a given series
-    pub fn nft_tokens_for_badges(
+    pub fn owner_nft_tokens_for_badges(
         &self,
         series_id: u64,
         account_id: AccountId,
@@ -211,7 +211,7 @@ impl Contract {
         }
     }
     //get the total supply of NFTs in a series for a given owner
-    pub fn series_token_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
+    pub fn owner_nft_tokens_for_series_count(&self, series_id: u64, account_id: AccountId) -> U128 {
         let number_of_tokens_in_series_owned = self
             .owner_tokens_per_series
             .get(&account_id)
@@ -222,7 +222,7 @@ impl Contract {
     }
 
     pub fn badge_token_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
-        self.series_token_supply_for_owner(series_id, account_id)
+        self.owner_nft_tokens_for_series_count(series_id, account_id)
     }
 
     // Paginate through all the series on the contract and return the a vector of JsonSeries
