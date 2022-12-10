@@ -191,7 +191,6 @@ test("should burn nft ", async (t) => {
 
   await createBadgeCollection(root, contract)
 
-
   await authorizedNFTMint(
     root,
     alice,
@@ -222,5 +221,124 @@ test("should burn nft ", async (t) => {
 })
 
 test("supply burn nft in batches", async (t) => {
+  const { root, contract, alice } = t.context.accounts;
+
+  await createBadgeCollection(root, contract)
+
+  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, "1",)
+
+  let nftTotalSupply = await contract.view("nft_total_supply")
+  let nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
+    account_id: alice.accountId,
+  })
+  let newBadgeTotalSupply = await contract.view("nft_supply_for_series", {
+    id: 1
+  })
+
+  let badgeTokenSupplyForOwner = await contract.view("badge_token_supply_for_owner", {
+    series_id: 1,
+    account_id: alice.accountId,
+  })
+
+  t.assert(nftSupplyForOwner, "4")
+  t.assert(badgeTokenSupplyForOwner, "4")
+  t.assert(nftTotalSupply == "4")
+  t.assert(newBadgeTotalSupply == "4")
+
+  await alice.call(contract, "batch_burn", {
+    series_id: 1,
+    limit: 2,
+  })
+  nftTotalSupply = await contract.view("nft_total_supply")
+  nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
+    account_id: alice.accountId,
+  })
+  newBadgeTotalSupply = await contract.view("nft_supply_for_series", {
+    id: 1
+  })
+
+  badgeTokenSupplyForOwner = await contract.view("badge_token_supply_for_owner", {
+    series_id: 1,
+    account_id: alice.accountId,
+  })
+
+  t.assert(nftSupplyForOwner, "2")
+  t.assert(badgeTokenSupplyForOwner, "2")
+  t.assert(nftTotalSupply == "2")
+  t.assert(newBadgeTotalSupply == "2")
+
+})
+
+test("reject update Badge media update for unauthorized acct", async (t) => {
+  const { root, contract, alice, } = t.context.accounts;
+  const hash = createHash('sha256');
+
+  await createBadgeCollection(root, contract)
+
+  await authorizedNFTMint(root, alice, contract, "1",)
+
+  const newMediaUrl = "https://news.artnet.com/app/news-upload/2021/09/Yuga-Labs-Bored-Ape-Yacht-Club-4466.jpg";
+  hash.update(newMediaUrl);
+  const newMediaHash = hash.digest('hex');
+
+  const result = await alice.callRaw(contract, "update_badge_collection_media", {
+    series_id: "1",
+    media: newMediaUrl,
+    media_hash: (newMediaHash)
+  })
+  t.regex(result.receiptFailureMessages.join("\n"), /Smart contract panicked: only approved creators can update metadata+/)
+
+
+})
+
+test("allow update Badge media update for authorized acct", async (t) => {
+  const { root, contract, alice, } = t.context.accounts;
+  const hash = createHash('sha256');
+
+  await createBadgeCollection(root, contract)
+
+  await authorizedNFTMint(root, alice, contract, "1",)
+
+  const newMediaUrl = "https://news.artnet.com/app/news-upload/2021/09/Yuga-Labs-Bored-Ape-Yacht-Club-4466.jpg";
+  hash.update(newMediaUrl);
+  const newMediaHash = hash.digest('hex');
+
+  await root.callRaw(contract, "update_badge_collection_media", {
+    series_id: "1",
+    media: newMediaUrl,
+    media_hash: (newMediaHash)
+  })
+  const aliceNFTs: any = await contract.view("nft_tokens_for_owner", {
+    account_id: alice.accountId,
+  })
+
+  t.assert(aliceNFTs[0].metadata.media, newMediaUrl)
+})
+
+test("should get user tokens by badge(series) type", async (t) => {
+  const { root, contract, alice, } = t.context.accounts;
+
+  await createBadgeCollection(root, contract)
+  await createBadgeCollection(root, contract)
+  await createBadgeCollection(root, contract)
+
+  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, "2",)
+  await authorizedNFTMint(root, alice, contract, "2",)
+
+  let aliceBadge1Tokens = await contract.view("badge_token_supply_for_owner", {
+    series_id: 1,
+    account_id: alice.accountId,
+  })
+  let aliceBadge2Tokens = await contract.view("badge_token_supply_for_owner", {
+    series_id: 2,
+    account_id: alice.accountId,
+  })
+
+  t.assert(aliceBadge1Tokens, "1")
+  t.assert(aliceBadge2Tokens, "2")
 
 })

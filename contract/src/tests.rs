@@ -218,7 +218,7 @@ pub fn test_update_series_media() {
     //we'll usually use file hash and not url hash
     let new_media_hash = Base64VecU8::from(env::sha256(format!("{}", new_media_string).as_bytes()));
 
-    contract.update_series_media(
+    contract.update_badge_collection_media(
         series_id.into(),
         Some(new_media_string.clone()),
         Some(new_media_hash.clone()),

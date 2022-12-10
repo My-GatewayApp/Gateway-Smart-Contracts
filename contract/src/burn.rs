@@ -11,7 +11,7 @@ impl Contract {
         if let Some(mut series) = series {
             series.tokens.remove(&token_id);
             self.series_by_id.insert(&token.series_id, &series);
-        } 
+        }
         //only the owner should be able to burn
         if owner_id != token.owner_id {
             env::panic_str("Unauthorized");
@@ -37,16 +37,16 @@ impl Contract {
         env::log_str(&nft_burn_log.to_string());
     }
 
-    pub fn batch_burn(&mut self, series_id: SeriesId,limit: Option<u64> ){
+    pub fn batch_burn(&mut self, series_id: SeriesId, limit: Option<u64>) {
         let owner_id = env::predecessor_account_id();
         let tokens_for_owner_set = self.tokens_per_owner.get(&owner_id);
-        
+
         let tokens_to_burn = if let Some(tokens_for_owner_set) = tokens_for_owner_set {
             let tokens = tokens_for_owner_set
                 .iter()
                 .map(|token_id| self.nft_token(token_id.clone()).unwrap())
                 .filter(|token| token.series_id == series_id)
-                .take(limit.unwrap_or(50) as usize)    
+                .take(limit.unwrap_or(50) as usize)
                 .collect();
             tokens
         } else {

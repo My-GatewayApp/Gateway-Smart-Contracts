@@ -106,7 +106,7 @@ impl Contract {
         refund_deposit(required_storage_in_bytes);
     }
 
-    pub fn update_series_media(
+    pub fn update_badge_collection_media(
         &mut self,
         series_id: U64,
         media: Option<String>,
