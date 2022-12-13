@@ -13,5 +13,6 @@
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "type": "module"
 }

@@ -1,4 +1,4 @@
-import { Worker, NearAccount, NEAR, BN } from 'near-workspaces';
+import { Worker, NearAccount, NEAR,  } from 'near-workspaces';
 import anyTest, { TestFn } from 'ava';
 import path from "path";
 import { createHash } from 'node:crypto'
