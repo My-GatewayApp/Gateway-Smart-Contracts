@@ -93,6 +93,8 @@ impl NonFungibleTokenCore for Contract {
         );
     }
 
+
+
     //implementation of the transfer call method. This will transfer the NFT and call a method on the receiver_id contract
     #[payable]
     fn nft_transfer_call(

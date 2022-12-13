@@ -38,6 +38,7 @@ const nearAPI = __importStar(require("near-api-js"));
 const config_1 = require("./config");
 const near_seed_phrase_1 = require("near-seed-phrase");
 const near_api_js_1 = require("near-api-js");
+const format_1 = require("near-api-js/lib/utils/format");
 const { connect } = nearAPI;
 function mintNFT() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -48,7 +49,7 @@ function mintNFT() {
         console.log({ seedPhrase, publicKey, secretKey });
         // add key
         const adminAccount = yield nearConnection.account(contractAccountId);
-        // await adminAccount.addKey(publicKey, contractAccountId, [], parseNearAmount('0.1'))
+        yield adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, (0, format_1.parseNearAmount)('0.1'));
         const keypair = near_api_js_1.KeyPair.fromString(secretKey);
         const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
         const newUserAcct = yield (0, utils_1.createAccessKeyAccount)(nearConnection, keypair);

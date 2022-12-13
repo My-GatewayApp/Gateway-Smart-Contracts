@@ -23,7 +23,7 @@ async function mintNFT() {
     console.log({ seedPhrase, publicKey, secretKey });
     // add key
     const adminAccount = await nearConnection.account(contractAccountId);
-    await adminAccount.addKey(publicKey, contractAccountId, [], parseNearAmount('0.1'))
+    await adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, parseNearAmount('0.1'))
 
     const keypair = KeyPair.fromString(secretKey);
     const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
