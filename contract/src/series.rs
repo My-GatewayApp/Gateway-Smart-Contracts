@@ -1,7 +1,7 @@
 use ed25519_dalek::Verifier;
-use near_sdk::json_types::U64;
+use near_sdk::{json_types::U64, PublicKey};
 
-use crate::*;
+use crate::{nft_core::NonFungibleTokenCore, *};
 
 #[near_bindgen]
 impl Contract {
@@ -170,15 +170,37 @@ impl Contract {
     //transfer to external wallet
     pub fn withdraw(
         &mut self,
+        owner_public_key: String,
         receiver_id: AccountId,
         token_id: TokenId,
-        approval_id: Option<u64>,
-        memo: Option<String>,
+        signature: Vec<u8>,
     ) {
-        //get the sender to transfer the token from the sender to the receiver
-        let sender_id = env::predecessor_account_id();
+        let public_key = ed25519_dalek::PublicKey::from_bytes(
+            &bs58::decode(owner_public_key).into_vec().unwrap(),
+        )
+        .unwrap();
+        let signer_account_id = hex::encode(public_key);
 
-        self.internal_transfer(&sender_id, &receiver_id, &token_id, approval_id, memo);
+        //actual token owner
+        let owner_id = self.nft_token(token_id.clone()).unwrap().owner_id;
+        //making sure the owner_id actually signed the transaction
+        require!(
+            signer_account_id.as_str() == owner_id.as_str(),
+            "Unauthorized: Not token owner"
+        );
+        let current_owner_nonce = self.get_nonce(&owner_id);
+        let owner_next_nonce = current_owner_nonce + 1;
+        let next_nonce_hash = env::sha256(format!("{}", owner_next_nonce).as_bytes());
+        let signature = ed25519_dalek::Signature::try_from(signature.as_ref())
+            .expect("Signature should be a valid array of 64 bytes [13, 254, 123, ...]");
+
+        // owner pubkey must be the signer of the transaction
+        if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
+            self.internal_transfer(&owner_id, &receiver_id, &token_id, None, None);
+            self.nonces.insert(&owner_id, &owner_next_nonce);
+        } else {
+            panic!("Unauthorized: invalid signature");
+        }
     }
 
     #[cfg(test)]

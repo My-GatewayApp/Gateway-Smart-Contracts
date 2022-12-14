@@ -58,7 +58,7 @@ function mintNFT() {
             contractId: contractAccountId,
             methodName: "mint_badge",
             args: {
-                id: "10",
+                id: "11",
                 receiver_id: userAccountId,
                 signature: signature
             },

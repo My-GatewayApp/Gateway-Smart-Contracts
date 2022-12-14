@@ -25,7 +25,7 @@ export async function getUserContract(account: nearAPI.Account) {
 }
 
 
-export async function createAccessKeyAccount(near: nearAPI.Near,key:nearAPI.KeyPair) {
+export async function createAccessKeyAccount(near: nearAPI.Near, key: nearAPI.KeyPair) {
 
     const { config, contractAccountId, keyStore } = await getConfig();
 
@@ -65,7 +65,39 @@ export async function generateAdminSignature(user: nearAPI.Account,) {
     return Array.from(signedMessage!.signature)
 
 }
+export async function generateUserSignature(account: nearAPI.Account, userSeedPhrase: string,) {
+    //we assume user with (userSeedPhrase) is the owner... so should have the ability to sign
+    // for withdrawals else, panic
 
+    const { secretKey } = await parseSeedPhrase(userSeedPhrase)
+    const userKeyPair = KeyPair.fromString(secretKey)
+    const userAccountId = Buffer.from(userKeyPair.getPublicKey().data).toString('hex');
+
+    const { contractAccountId, } = await getConfig();
+
+    const userNonce = await account.viewFunctionV2({
+        contractId: contractAccountId,
+        methodName: "get_nonce",
+        args: {
+            account_id: userAccountId
+        }
+    })
+
+    const hash = createHash('sha256');
+
+    //sign nonce using user account(owner)
+    const nextNonce: number = parseInt(userNonce as any) + 1
+    const message = nextNonce;
+
+    hash.update(message.toString())
+
+    const hashedMessage = hash.digest()
+
+    const signedMessage = userKeyPair?.sign(hashedMessage);
+
+    return Array.from(signedMessage!.signature)
+
+}
 export const sleep = (ms: number): Promise<void> => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };

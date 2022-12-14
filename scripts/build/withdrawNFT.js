@@ -44,20 +44,22 @@ function withdrawNFT() {
         const gatewayConfig = yield (0, config_1.getConfig)();
         const { config, contractAccountId } = gatewayConfig;
         const nearConnection = yield connect(config);
-        const { seedPhrase, publicKey, secretKey } = (0, near_seed_phrase_1.parseSeedPhrase)("hedgehog copper bullet copy very used vacant peanut right cherry neck absent");
+        let userSeedPhrase = "eager number news brain duty iron eternal cupboard wonder bar sister milk";
+        let receiver_id = "gateway1.testnet";
+        let token_id = "11:2";
+        const { seedPhrase, publicKey, secretKey } = (0, near_seed_phrase_1.parseSeedPhrase)(userSeedPhrase);
         console.log({ seedPhrase, publicKey, secretKey });
-        // add key
-        const adminAccount = yield nearConnection.account(contractAccountId);
         const keypair = near_api_js_1.KeyPair.fromString(secretKey);
-        const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
         const newUserAcct = yield (0, utils_1.createAccessKeyAccount)(nearConnection, keypair);
+        const signature = yield (0, utils_1.generateUserSignature)(newUserAcct, userSeedPhrase);
         yield newUserAcct.functionCall({
             contractId: contractAccountId,
             methodName: "withdraw",
             args: {
-                token_id: "10:1",
-                receiver_id: "gateway1.testnet",
-                // signature: signature
+                owner_public_key: publicKey.split(":")[1],
+                token_id,
+                receiver_id: receiver_id,
+                signature: signature
             },
             gas: 300000000000000,
         });

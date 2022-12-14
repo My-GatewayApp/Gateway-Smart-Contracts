@@ -32,7 +32,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sleep = exports.generateAdminSignature = exports.createAccessKeyAccount = exports.getUserContract = exports.getAdminContract = exports.loadAdminKeys = void 0;
+exports.sleep = exports.generateUserSignature = exports.generateAdminSignature = exports.createAccessKeyAccount = exports.getUserContract = exports.getAdminContract = exports.loadAdminKeys = void 0;
 const near_seed_phrase_1 = require("near-seed-phrase");
 const nearAPI = __importStar(require("near-api-js"));
 const config_1 = require("./config");
@@ -92,6 +92,32 @@ function generateAdminSignature(user) {
     });
 }
 exports.generateAdminSignature = generateAdminSignature;
+function generateUserSignature(account, userSeedPhrase) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //we assume user with (userSeedPhrase) is the owner... so should have the ability to sign
+        // for withdrawals else, panic
+        const { secretKey } = yield (0, near_seed_phrase_1.parseSeedPhrase)(userSeedPhrase);
+        const userKeyPair = KeyPair.fromString(secretKey);
+        const userAccountId = Buffer.from(userKeyPair.getPublicKey().data).toString('hex');
+        const { contractAccountId, } = yield (0, config_1.getConfig)();
+        const userNonce = yield account.viewFunctionV2({
+            contractId: contractAccountId,
+            methodName: "get_nonce",
+            args: {
+                account_id: userAccountId
+            }
+        });
+        const hash = (0, node_crypto_1.createHash)('sha256');
+        //sign nonce using user account(owner)
+        const nextNonce = parseInt(userNonce) + 1;
+        const message = nextNonce;
+        hash.update(message.toString());
+        const hashedMessage = hash.digest();
+        const signedMessage = userKeyPair === null || userKeyPair === void 0 ? void 0 : userKeyPair.sign(hashedMessage);
+        return Array.from(signedMessage.signature);
+    });
+}
+exports.generateUserSignature = generateUserSignature;
 const sleep = (ms) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
 };
