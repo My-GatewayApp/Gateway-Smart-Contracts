@@ -36,57 +36,52 @@ require('dotenv').config();
 const utils_1 = require("./utils");
 const nearAPI = __importStar(require("near-api-js"));
 const config_1 = require("./config");
+const near_seed_phrase_1 = require("near-seed-phrase");
+const near_api_js_1 = require("near-api-js");
+const format_1 = require("near-api-js/lib/utils/format");
 const { connect } = nearAPI;
-function createCollection() {
+function mintNFT() {
     return __awaiter(this, void 0, void 0, function* () {
-        const { config, contractAccountId } = yield (0, config_1.getConfig)();
+        const gatewayConfig = yield (0, config_1.getConfig)();
+        const { config, contractAccountId } = gatewayConfig;
         const nearConnection = yield connect(config);
+        const { seedPhrase, publicKey, secretKey } = (0, near_seed_phrase_1.generateSeedPhrase)();
+        console.log({ seedPhrase, publicKey, secretKey });
+        // add key
         const adminAccount = yield nearConnection.account(contractAccountId);
-        const { publicKey: adminPublicKey } = yield (0, utils_1.loadAdminKeys)();
-        try {
-            yield adminAccount.functionCall({
-                contractId: contractAccountId,
-                methodName: "new_default_meta",
-                args: {
-                    owner_id: adminAccount.accountId,
-                    owner_public_key: adminPublicKey.split(":")[1],
-                }
-            });
-        }
-        catch (error) {
-            console.log(error.kind.ExecutionError);
-        }
-        const new_badge_payload = {
-            badge_type: 1,
-            metadata: {
-                title: 'Blue badge',
-                description: "first level badge in the gateway nft collection",
-                media: "https://pbs.twimg.com/media/Fj4w5HiX0AIqk40?format=jpg&name=small",
+        yield adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, (0, format_1.parseNearAmount)('0.1'));
+        const keypair = near_api_js_1.KeyPair.fromString(secretKey);
+        const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
+        const newUserAcct = yield (0, utils_1.createAccessKeyAccount)(nearConnection, keypair);
+        const signature = yield (0, utils_1.generateAdminSignature)(newUserAcct);
+        const result = yield newUserAcct.functionCall({
+            contractId: contractAccountId,
+            methodName: "mint_badge",
+            args: {
+                id: "8",
+                receiver_id: userAccountId,
+                signature: signature
             },
-            royalty: null,
-            price: null,
-        };
-        const nft_metadata = yield adminAccount.viewFunctionV2({
-            contractId: contractAccountId,
-            methodName: "nft_metadata",
-            args: {}
+            gas: 300000000000000,
         });
-        console.log("-----------------NFT COLLECTION METADATA------------------------");
-        console.log(nft_metadata);
-        yield adminAccount.functionCall({
-            contractId: contractAccountId,
-            methodName: "create_badge_collection",
-            args: Object.assign({}, new_badge_payload)
-        });
-        const totalBadges = yield adminAccount.viewFunctionV2({
-            contractId: contractAccountId,
-            methodName: "get_series_total_supply",
-            args: {}
-        });
-        console.log(totalBadges);
+        console.log("------------------STATEMENT------------------");
+        console.log((result.receipts_outcome[0].outcome.logs[1]));
+        let input = result.receipts_outcome[0].outcome.logs[1];
+        console.log(JSON.parse(input));
+        console.log("------------------STATEMENT------------------");
+        // await newUserAcct.functionCall({
+        //     contractId: contractAccountId,
+        //     methodName: "transfer_badge",
+        //     args: {
+        //         token_id: "8",
+        //         receiver_id: userAccountId,
+        //         // signature: signature
+        //     },
+        //     gas: 300000000000000,
+        // })
     });
 }
-createCollection().then(() => process.exit(), err => {
+mintNFT().then(() => process.exit(), err => {
     console.error(err);
     process.exit(-1);
 });

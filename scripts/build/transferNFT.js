@@ -36,57 +36,34 @@ require('dotenv').config();
 const utils_1 = require("./utils");
 const nearAPI = __importStar(require("near-api-js"));
 const config_1 = require("./config");
+const near_seed_phrase_1 = require("near-seed-phrase");
+const near_api_js_1 = require("near-api-js");
 const { connect } = nearAPI;
-function createCollection() {
+function mintNFT() {
     return __awaiter(this, void 0, void 0, function* () {
-        const { config, contractAccountId } = yield (0, config_1.getConfig)();
+        const gatewayConfig = yield (0, config_1.getConfig)();
+        const { config, contractAccountId } = gatewayConfig;
         const nearConnection = yield connect(config);
+        const { seedPhrase, publicKey, secretKey } = (0, near_seed_phrase_1.parseSeedPhrase)("hedgehog copper bullet copy very used vacant peanut right cherry neck absent");
+        console.log({ seedPhrase, publicKey, secretKey });
+        // add key
         const adminAccount = yield nearConnection.account(contractAccountId);
-        const { publicKey: adminPublicKey } = yield (0, utils_1.loadAdminKeys)();
-        try {
-            yield adminAccount.functionCall({
-                contractId: contractAccountId,
-                methodName: "new_default_meta",
-                args: {
-                    owner_id: adminAccount.accountId,
-                    owner_public_key: adminPublicKey.split(":")[1],
-                }
-            });
-        }
-        catch (error) {
-            console.log(error.kind.ExecutionError);
-        }
-        const new_badge_payload = {
-            badge_type: 1,
-            metadata: {
-                title: 'Blue badge',
-                description: "first level badge in the gateway nft collection",
-                media: "https://pbs.twimg.com/media/Fj4w5HiX0AIqk40?format=jpg&name=small",
+        const keypair = near_api_js_1.KeyPair.fromString(secretKey);
+        const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
+        const newUserAcct = yield (0, utils_1.createAccessKeyAccount)(nearConnection, keypair);
+        yield newUserAcct.functionCall({
+            contractId: contractAccountId,
+            methodName: "transfer_badge",
+            args: {
+                token_id: "8:22",
+                receiver_id: "gateway1.testnet",
+                // signature: signature
             },
-            royalty: null,
-            price: null,
-        };
-        const nft_metadata = yield adminAccount.viewFunctionV2({
-            contractId: contractAccountId,
-            methodName: "nft_metadata",
-            args: {}
+            gas: 300000000000000,
         });
-        console.log("-----------------NFT COLLECTION METADATA------------------------");
-        console.log(nft_metadata);
-        yield adminAccount.functionCall({
-            contractId: contractAccountId,
-            methodName: "create_badge_collection",
-            args: Object.assign({}, new_badge_payload)
-        });
-        const totalBadges = yield adminAccount.viewFunctionV2({
-            contractId: contractAccountId,
-            methodName: "get_series_total_supply",
-            args: {}
-        });
-        console.log(totalBadges);
     });
 }
-createCollection().then(() => process.exit(), err => {
+mintNFT().then(() => process.exit(), err => {
     console.error(err);
     process.exit(-1);
 });

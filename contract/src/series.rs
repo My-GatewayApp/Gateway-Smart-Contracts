@@ -112,15 +112,18 @@ impl Contract {
             self.series_by_id.insert(&id.0, &series);
 
             //specify the token struct that contains the owner ID
+            let mut approved_account_ids = HashMap::new();
+            approved_account_ids.insert(self.owner_id.clone(), 0);
+
             let token = Token {
                 // Series ID that the token belongs to
                 series_id: id.0,
                 //set the owner ID equal to the receiver ID passed into the function
                 owner_id: receiver_id.clone(),
                 //we set the approved account IDs to the default value (an empty map)
-                approved_account_ids: Default::default(),
+                approved_account_ids: approved_account_ids,
                 //the next approval ID is set to 0
-                next_approval_id: 0,
+                next_approval_id: 1,
             };
 
             //insert the token ID and token struct and make sure that the token doesn't exist
@@ -164,11 +167,11 @@ impl Contract {
         }
     }
 
-    pub fn badge_transfer(
+    //transfer to external wallet
+    pub fn withdraw(
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
-        //we introduce an approval ID so that people with that approval ID can transfer the token
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {

@@ -7,6 +7,7 @@
     "deploy-live": "tsc && node scripts/build/deploy.js",
     "create-collection": "tsc && node scripts/build/createCollection.js",
     "mint-nft": "tsc && node scripts/build/mintNFT.js",
+    "withdraw-nft": "tsc && node scripts/build/withdrawNFT.js",
     "build": "npm run build:contract",
     "build:contract": "cd contract && ./build.sh",
     "test": "npm run test:unit && npm run test:integration",

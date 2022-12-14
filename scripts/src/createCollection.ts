@@ -36,7 +36,7 @@ async function createCollection() {
             title: 'Blue badge',
             description: "first level badge in the gateway nft collection",
             media:
-                "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%3Fid%3DOIP.Fhp4lHufCdTzTeGCAblOdgHaF7%26pid%3DApi&f=1",
+                "https://pbs.twimg.com/media/Fj4w5HiX0AIqk40?format=jpg&name=small",
         },
         royalty: null,
         price: null,
@@ -60,7 +60,14 @@ async function createCollection() {
             ...new_badge_payload
         }
     })
-
+    const totalBadges = await adminAccount.viewFunctionV2(
+        {
+            contractId: contractAccountId,
+            methodName: "get_series_total_supply",
+            args: {}
+        }
+    )
+    console.log(totalBadges);
 }
 createCollection().then(
     () => process.exit(),

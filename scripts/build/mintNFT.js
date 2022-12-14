@@ -54,26 +54,16 @@ function mintNFT() {
         const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
         const newUserAcct = yield (0, utils_1.createAccessKeyAccount)(nearConnection, keypair);
         const signature = yield (0, utils_1.generateAdminSignature)(newUserAcct);
-        // console.log(await keyStore.getAccounts(config.networkId));
-        // const adminAccount = await nearConnection.account(contractAccountId);
         yield newUserAcct.functionCall({
             contractId: contractAccountId,
             methodName: "mint_badge",
             args: {
-                id: "1",
+                id: "10",
                 receiver_id: userAccountId,
                 signature: signature
             },
             gas: 300000000000000,
         });
-        // const userContract = await getUserContract(newUser)
-        // await userContract.mint_badge({
-        //     args: {
-        //         id: 1,
-        //         receiver_id: newUser.accountId,
-        //         signature: signature
-        //     }
-        // });
     });
 }
 mintNFT().then(() => process.exit(), err => {
