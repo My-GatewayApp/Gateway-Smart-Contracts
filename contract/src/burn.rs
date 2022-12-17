@@ -1,21 +1,110 @@
+use ed25519_dalek::Verifier;
+
 use crate::{nft_core::NonFungibleTokenCore, *};
 
 /// CUSTOM - owner can burn a locked token for a given user, reducing the enumerable->nft_supply_for_type
 #[near_bindgen]
 impl Contract {
-    pub fn nft_burn(&mut self, token_id: TokenId) {
-        let owner_id = env::predecessor_account_id();
+    pub fn nft_burn(&mut self, token_id: TokenId, owner_public_key: String, signature: Vec<u8>) {
+        let public_key = ed25519_dalek::PublicKey::from_bytes(
+            &bs58::decode(owner_public_key).into_vec().unwrap(),
+        )
+        .unwrap();
+
+        let mut owner_id = AccountId::new_unchecked(hex::encode(public_key));
+
         let token = self.tokens_by_id.get(&token_id).expect("No token");
+        //only the owner should be able to burn
+        let signer_acct = env::predecessor_account_id();
+        if owner_id != token.owner_id && signer_acct != token.owner_id {
+            env::panic_str("Unauthorized: wrong owner");
+        };
+
+        if signer_acct == token.owner_id{
+            owner_id = signer_acct;
+        }
+        //ensure owner actually signed
+        let current_owner_nonce = self.get_nonce(&owner_id);
+        let owner_next_nonce = current_owner_nonce + 1;
+        let next_nonce_hash = env::sha256(format!("{}", owner_next_nonce).as_bytes());
+        let signature = ed25519_dalek::Signature::try_from(signature.as_ref())
+            .expect("Signature should be a valid array of 64 bytes [13, 254, 123, ...]");
+
+        if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
+            self.burn_helper(token_id, owner_id);
+        } else {
+            panic!("Unauthorized: invalid signature");
+        }
+    }
+
+    pub fn batch_burn(
+        &mut self,
+        series_id: SeriesId,
+        amount: Option<u64>,
+        owner_public_key: String,
+        signature: Vec<u8>,
+    ) {
+        let owner_id = env::predecessor_account_id();
+        let tokens_for_owner_set = self.tokens_per_owner.get(&owner_id);
+
+        let tokens_to_burn = if let Some(tokens_for_owner_set) = tokens_for_owner_set {
+            let tokens = tokens_for_owner_set
+                .iter()
+                .map(|token_id| self.nft_token(token_id.clone()).unwrap())
+                .filter(|token| token.series_id == series_id)
+                .take(amount.unwrap_or(10) as usize)
+                .collect();
+            tokens
+        } else {
+            vec![]
+        };
+
+        if tokens_to_burn.len() > 0 {
+            //get the first token property
+            let token_0 = &tokens_to_burn[0];
+
+            let public_key = ed25519_dalek::PublicKey::from_bytes(
+                &bs58::decode(owner_public_key).into_vec().unwrap(),
+            )
+            .unwrap();
+
+            let mut owner_id = AccountId::new_unchecked(hex::encode(public_key));
+
+            //only the owner should be able to burn
+            let signer_acct = env::predecessor_account_id();
+            if owner_id != token_0.owner_id && signer_acct != token_0.owner_id {
+                env::panic_str("Unauthorized: wrong owner");
+            };
+
+            if signer_acct == token_0.owner_id{
+                owner_id = signer_acct;
+            }
+
+            //ensure owner actually signed
+            let current_owner_nonce = self.get_nonce(&owner_id);
+            let owner_next_nonce = current_owner_nonce + 1;
+            let next_nonce_hash = env::sha256(format!("{}", owner_next_nonce).as_bytes());
+            let signature = ed25519_dalek::Signature::try_from(signature.as_ref())
+                .expect("Signature should be a valid array of 64 bytes [13, 254, 123, ...]");
+
+            if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
+                for token in tokens_to_burn {
+                    self.burn_helper(token.token_id, owner_id.clone());
+                }
+            } else {
+                panic!("Unauthorized: invalid signature");
+            }
+        }
+    }
+    fn burn_helper(&mut self, token_id: TokenId, owner_id: AccountId) {
+        let token = self.tokens_by_id.get(&token_id).expect("No token");
+
         let series = self.series_by_id.get(&token.series_id);
 
         if let Some(mut series) = series {
             series.tokens.remove(&token_id);
             self.series_by_id.insert(&token.series_id, &series);
         }
-        //only the owner should be able to burn
-        if owner_id != token.owner_id {
-            env::panic_str("Unauthorized");
-        };
         // remove from tokens_per_owner and owner_tokens_per_series
         self.internal_remove_token_from_owner(&owner_id, &token_id);
         //remove tokens from tokens_by_id map
@@ -35,26 +124,5 @@ impl Contract {
             }]),
         };
         env::log_str(&nft_burn_log.to_string());
-    }
-
-    pub fn batch_burn(&mut self, series_id: SeriesId, limit: Option<u64>) {
-        let owner_id = env::predecessor_account_id();
-        let tokens_for_owner_set = self.tokens_per_owner.get(&owner_id);
-
-        let tokens_to_burn = if let Some(tokens_for_owner_set) = tokens_for_owner_set {
-            let tokens = tokens_for_owner_set
-                .iter()
-                .map(|token_id| self.nft_token(token_id.clone()).unwrap())
-                .filter(|token| token.series_id == series_id)
-                .take(limit.unwrap_or(50) as usize)
-                .collect();
-            tokens
-        } else {
-            vec![]
-        };
-
-        for token in tokens_to_burn {
-            self.nft_burn(token.token_id)
-        }
     }
 }

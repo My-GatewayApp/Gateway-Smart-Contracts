@@ -1,8 +1,8 @@
-import { Worker, NearAccount, NEAR,  } from 'near-workspaces';
+import { Worker, NearAccount, NEAR, } from 'near-workspaces';
 import anyTest, { TestFn } from 'ava';
 import path from "path";
 import { createHash } from 'node:crypto'
-import { authorizedNFTMint, createBadgeCollection, createBadgeCollectionRaw } from './utils';
+import { authorizedBatchNFTMint, authorizedNFBatchTBurn, authorizedNFTBurn, authorizedNFTMint, createBadgeCollection, createBadgeCollectionRaw } from './utils';
 
 
 const test = anyTest as TestFn<{
@@ -164,7 +164,8 @@ test('should allow authorized nft mint', async (t) => {
   await authorizedNFTMint(
     root,
     alice,
-    contract, "1",
+    contract,
+    "1",
   )
 
   const nftTotalSupply = await contract.view("nft_total_supply")
@@ -186,6 +187,40 @@ test('should allow authorized nft mint', async (t) => {
   t.assert(newBadgeTotalSupply == "1")
 })
 
+
+test('should allow authorized batch nft mint', async (t) => {
+  const { root, contract, alice } = t.context.accounts;
+
+  await createBadgeCollection(root, contract)
+
+
+  await authorizedBatchNFTMint(
+    root,
+    alice,
+    contract,
+    "1",
+    5
+  )
+
+  const nftTotalSupply = await contract.view("nft_total_supply")
+  const nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
+    account_id: alice.accountId,
+  })
+  const newBadgeTotalSupply = await contract.view("nft_supply_for_series", {
+    id: 1
+  })
+
+  const badgeTokenSupplyForOwner = await contract.view("badge_token_supply_for_owner", {
+    series_id: 1,
+    account_id: alice.accountId,
+  })
+
+  t.assert(nftSupplyForOwner, "5")
+  t.assert(badgeTokenSupplyForOwner, "5")
+  t.assert(nftTotalSupply == "5")
+  t.assert(newBadgeTotalSupply == "5")
+})
+
 test("should burn nft ", async (t) => {
   const { root, contract, alice } = t.context.accounts;
 
@@ -201,10 +236,8 @@ test("should burn nft ", async (t) => {
     account_id: alice.accountId,
   })
 
-  await alice.call(contract, "nft_burn", {
-    token_id: aliceNFTs[0].token_id,
-  })
 
+  await authorizedNFTBurn(alice, contract, aliceNFTs[0].token_id);
 
   const nftTotalSupply = await contract.view("nft_total_supply")
   const nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
@@ -221,14 +254,19 @@ test("should burn nft ", async (t) => {
 })
 
 test("supply burn nft in batches", async (t) => {
+
+
   const { root, contract, alice } = t.context.accounts;
 
   await createBadgeCollection(root, contract)
+  await authorizedBatchNFTMint(
+    root,
+    alice,
+    contract,
+    "1",
+    4
+  )
 
-  await authorizedNFTMint(root, alice, contract, "1",)
-  await authorizedNFTMint(root, alice, contract, "1",)
-  await authorizedNFTMint(root, alice, contract, "1",)
-  await authorizedNFTMint(root, alice, contract, "1",)
 
   let nftTotalSupply = await contract.view("nft_total_supply")
   let nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
@@ -248,10 +286,10 @@ test("supply burn nft in batches", async (t) => {
   t.assert(nftTotalSupply == "4")
   t.assert(newBadgeTotalSupply == "4")
 
-  await alice.call(contract, "batch_burn", {
-    series_id: 1,
-    limit: 2,
-  })
+
+ await authorizedNFBatchTBurn(alice, contract, 1, 2);
+
+  
   nftTotalSupply = await contract.view("nft_total_supply")
   nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
     account_id: alice.accountId,

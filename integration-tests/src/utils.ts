@@ -80,3 +80,102 @@ export async function authorizedNFTMint(
         signature: Array.from(signedMessage!.signature)
     })
 }
+
+export async function authorizedBatchNFTMint(
+    root: NearAccount,
+    user: NearAccount,
+    contract: NearAccount,
+    seriesId: string,
+    amount: number
+) {
+    //get current user nonce
+    const nonce = await contract.call(contract, "get_nonce", {
+        account_id: user.accountId
+    });
+
+
+    //sign nonce using alice account(admin)
+    const nextNonce: number = parseInt(nonce as any) + 1
+    const hash = createHash('sha256');
+
+    const keyPair = await root.getKey();
+
+
+    const message = nextNonce;
+    hash.update(message.toString())
+    const hashedMessage = hash.digest()
+    const signedMessage = keyPair?.sign(hashedMessage);
+
+    // try to mint nft using wrong permission 
+    //make an authorized mint
+    return await user.callRaw(contract, "batch_mint", {
+        id: seriesId,
+        receiver_id: user.accountId,
+        signature: Array.from(signedMessage!.signature),
+        amount
+    })
+}
+
+export async function authorizedNFTBurn(
+    user: NearAccount,
+    contract: NearAccount,
+    token_id: string,
+) {
+    //get current user nonce
+    const nonce = await contract.call(contract, "get_nonce", {
+        account_id: user.accountId
+    });
+
+
+    //sign nonce using alice account(admin)
+    const nextNonce: number = parseInt(nonce as any) + 1
+    const hash = createHash('sha256');
+
+    const keyPair = await user.getKey();
+
+
+    const message = nextNonce;
+    hash.update(message.toString())
+    const hashedMessage = hash.digest()
+    const signedMessage = keyPair?.sign(hashedMessage);
+
+
+    return await user.callRaw(contract, "nft_burn", {
+        token_id,
+        owner_public_key: keyPair?.getPublicKey().toString().split(":")[1],
+        signature: Array.from(signedMessage!.signature)
+    })
+}
+
+export async function authorizedNFBatchTBurn(
+    user: NearAccount,
+    contract: NearAccount,
+    series_id: number,
+    amount: number
+) {
+    //get current user nonce
+    const nonce = await contract.call(contract, "get_nonce", {
+        account_id: user.accountId
+    });
+
+
+    //sign nonce using alice account(admin)
+    const nextNonce: number = parseInt(nonce as any) + 1
+    const hash = createHash('sha256');
+
+    const keyPair = await user.getKey();
+
+
+    const message = nextNonce;
+    hash.update(message.toString())
+    const hashedMessage = hash.digest()
+    const signedMessage = keyPair?.sign(hashedMessage);
+
+
+    return await user.callRaw(contract, "batch_burn", {
+        series_id,
+        owner_public_key: keyPair?.getPublicKey().toString().split(":")[1],
+        amount,
+        signature: Array.from(signedMessage!.signature),
+    })
+}

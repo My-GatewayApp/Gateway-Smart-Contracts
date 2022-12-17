@@ -44,9 +44,9 @@ function withdrawNFT() {
         const gatewayConfig = yield (0, config_1.getConfig)();
         const { config, contractAccountId } = gatewayConfig;
         const nearConnection = yield connect(config);
-        let userSeedPhrase = "eager number news brain duty iron eternal cupboard wonder bar sister milk";
+        let userSeedPhrase = "sport faculty explain brass device shuffle tourist tiny immense egg movie battle";
         let receiver_id = "gateway1.testnet";
-        let token_id = "11:2";
+        let token_id = "11:5";
         const { seedPhrase, publicKey, secretKey } = (0, near_seed_phrase_1.parseSeedPhrase)(userSeedPhrase);
         console.log({ seedPhrase, publicKey, secretKey });
         const keypair = near_api_js_1.KeyPair.fromString(secretKey);
