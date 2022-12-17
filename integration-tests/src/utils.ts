@@ -176,6 +176,7 @@ export async function authorizedNFBatchTBurn(
         series_id,
         owner_public_key: keyPair?.getPublicKey().toString().split(":")[1],
         amount,
-        signature: Array.from(signedMessage!.signature),
+        signature: Array.from(signedMessage!.signature),//wont be used on the contract as 
+        named_owner_id: user.accountId//the owner is the caller here
     })
 }

@@ -287,8 +287,9 @@ test("supply burn nft in batches", async (t) => {
   t.assert(newBadgeTotalSupply == "4")
 
 
- await authorizedNFBatchTBurn(alice, contract, 1, 2);
+ const result = await authorizedNFBatchTBurn(alice, contract, 1, 2);
 
+  
   
   nftTotalSupply = await contract.view("nft_total_supply")
   nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
