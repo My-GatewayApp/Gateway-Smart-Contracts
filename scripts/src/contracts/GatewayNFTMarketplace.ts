@@ -18,7 +18,7 @@ export interface GatewayNFTMarketplace extends nearAPI.Contract {
   }): Promise<void>;
 
 
-  create_badge_collection(options: {
+  create_series(options: {
     args: {
       [key: string]: any;
     };

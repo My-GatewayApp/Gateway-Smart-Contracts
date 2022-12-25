@@ -12,9 +12,26 @@ pub struct JsonSeries {
     // Owner of the collection
     pub owner_id: AccountId,
     //Type of the collection
-    pub badge_type: u8,
+    pub series_type: u8,
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OwnerDashboardJson {
+    pub series_id: u64,
+    // selected metadata
+    pub title: Option<String>,
+    // free-form description
+    pub description: Option<String>,
+    //image url
+    pub media: Option<String>,
+    // number of (series_id) nft the owner has
+    pub copies_owned: u64,
+    // Owner of the collection
+    pub owner_id: AccountId,
+    //Type of the collection
+    pub series_type: u8,
+}
 #[near_bindgen]
 impl Contract {
     //Query for the total supply of NFTs on the contract
@@ -56,7 +73,7 @@ impl Contract {
     }
 
     //Query for all the tokens for an owner
-    pub fn nft_tokens_for_owner(
+    pub fn all_nft_tokens_for_owner(
         &self,
         account_id: AccountId,
         from_index: Option<U128>,
@@ -87,7 +104,6 @@ impl Contract {
             //since we turned the keys into an iterator, we need to turn it back into a vector to return
             .collect()
     }
-
     // Get the total supply of series on the contract
     pub fn get_series_total_supply(&self) -> u64 {
         self.series_by_id.len()
@@ -122,7 +138,7 @@ impl Contract {
                 metadata: series.metadata,
                 royalty: series.royalty,
                 owner_id: series.owner_id,
-                badge_type: series.badge_type.to_code(),
+                series_type: series.series_type.to_code(),
             })
         } else {
             //if there isn't a series, we'll return None
@@ -215,10 +231,40 @@ impl Contract {
         let number_of_tokens_in_series_owned = self
             .owner_tokens_per_series
             .get(&account_id)
-            .expect("Owner does not have token in this series")
+            .expect("Owner does not have any nft yet")
             .get(&series_id)
             .unwrap_or(0);
         U128(number_of_tokens_in_series_owned.into())
+    }
+
+    //get info on the tokens the user owns
+    pub fn owner_nft_dashboard(&self, account_id: AccountId) -> Vec<OwnerDashboardJson> {
+        self.owner_tokens_per_series
+            .get(&account_id)
+            .expect("Owner does not have any nft yet")
+            .iter()
+            .map(|(series_id, count)| {
+                let json_series = self.get_series_details(series_id).unwrap();
+
+                let JsonSeries {
+                    series_id,
+                    metadata,
+                    royalty: _,
+                    owner_id,
+                    series_type,
+                } = json_series;
+
+                OwnerDashboardJson {
+                    series_id,
+                    owner_id,
+                    series_type,
+                    title: metadata.title,
+                    description: metadata.description,
+                    media: metadata.media,
+                    copies_owned: count,
+                }
+            })
+            .collect()
     }
 
     pub fn badge_token_supply_for_owner(&self, series_id: u64, account_id: AccountId) -> U128 {
@@ -226,13 +272,13 @@ impl Contract {
     }
 
     // Paginate through all the series on the contract and return the a vector of JsonSeries
-    pub fn get_badge_series_by_type(&self, badge_type: u8) -> Vec<JsonSeries> {
+    pub fn get_badge_series_by_type(&self, series_type: u8) -> Vec<JsonSeries> {
         //iterate through each series using an iterator
         self.series_by_id
             .keys()
             //we'll map the series IDs which are strings into Json Series
             .map(|series_id| self.get_series_details(series_id.clone()).unwrap())
-            .filter(|series| series.badge_type == badge_type)
+            .filter(|series| series.series_type == series_type)
             //since we turned the keys into an iterator, we need to turn it back into a vector to return
             .collect()
     }

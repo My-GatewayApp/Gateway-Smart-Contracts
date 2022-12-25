@@ -47,29 +47,29 @@ pub struct Series {
     price: Option<Balance>,
     // Owner of the collection
     owner_id: AccountId,
-    badge_type: SeriesType,
+    series_type: SeriesType,
 }
 
 pub type SeriesId = u64;
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum SeriesType {
-    Default = 1, //1
-    Custom = 2,  //2
+    UNLIMITED = 1, //1
+    LIMITED = 2,   //2
 }
 
 impl SeriesType {
     pub fn to_code(&self) -> u8 {
         match self {
-            SeriesType::Default => 1,
-            SeriesType::Custom => 2,
+            SeriesType::UNLIMITED => 1,
+            SeriesType::LIMITED => 2,
         }
     }
 
     pub fn from(val: u8) -> SeriesType {
         match val {
-            1 => (SeriesType::Default),
-            2 => (SeriesType::Custom),
+            1 => (SeriesType::UNLIMITED),
+            2 => (SeriesType::LIMITED),
             _ => panic!("Invalid Series Type"),
         }
     }
@@ -101,7 +101,7 @@ pub struct Contract {
 
     //keeps track of the number of tokens an owner owns
     //for every series
-    pub owner_tokens_per_series: LookupMap<AccountId, LookupMap<SeriesId, u64>>,
+    pub owner_tokens_per_series: UnorderedMap<AccountId, UnorderedMap<SeriesId, u64>>,
 
     //keeps track of the metadata for the contract
     pub metadata: LazyOption<NFTContractMetadata>,
@@ -123,7 +123,7 @@ pub enum StorageKey {
     OwnerTokensPerSeriesInner { account_id_hash: CryptoHash },
     TokensById,
     NFTContractMetadata,
-    Nonces
+    Nonces,
 }
 
 #[near_bindgen]
@@ -137,7 +137,6 @@ impl Contract {
     pub fn new_default_meta(owner_id: AccountId, owner_public_key: String) -> Self {
         //calls the other function "new: with some default metadata and the owner_id passed in
 
-        
         // let msg = format!("owner pub key: {:?}", owner_public_key);
         // env::log_str(&msg);
 
@@ -184,7 +183,7 @@ impl Contract {
             series_by_id: UnorderedMap::new(StorageKey::SeriesById.try_to_vec().unwrap()),
             //Storage keys are simply the prefixes used for the collections. This helps avoid data collision
             tokens_per_owner: LookupMap::new(StorageKey::TokensPerOwner.try_to_vec().unwrap()),
-            owner_tokens_per_series: LookupMap::new(
+            owner_tokens_per_series: UnorderedMap::new(
                 StorageKey::OwnerTokensPerSeries.try_to_vec().unwrap(),
             ),
             tokens_by_id: UnorderedMap::new(StorageKey::TokensById.try_to_vec().unwrap()),
@@ -196,7 +195,6 @@ impl Contract {
                 Some(&metadata),
             ),
             nonces: LookupMap::new(StorageKey::Nonces.try_to_vec().unwrap()),
-
         };
 
         //return the Contract object

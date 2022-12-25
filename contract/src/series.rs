@@ -1,5 +1,5 @@
 use ed25519_dalek::Verifier;
-use near_sdk::{json_types::U64,};
+use near_sdk::json_types::U64;
 
 use crate::{nft_core::NonFungibleTokenCore, *};
 
@@ -10,9 +10,9 @@ impl Contract {
     /// If a title is set in the metadata, enumeration methods will return the `${title} - ${edition}` else, `${series_id} - ${edition}`
     /// All token IDs internally are stored as `${series_id}:${edition}`
     #[private]
-    pub fn create_badge_collection(
+    pub fn create_series(
         &mut self,
-        badge_type: u8,
+        series_type: u8,
         metadata: TokenMetadata,
         royalty: Option<HashMap<AccountId, u32>>,
         price: Option<U128>,
@@ -23,7 +23,7 @@ impl Contract {
             self.approved_creators.contains(&caller) == true,
             "only approved creators can add a new badge collection"
         );
-        require!(badge_type <= 2, "Invalid badge type");
+        require!(series_type <= 2, "Invalid badge type");
         let new_series_id = self.series_by_id.len() + 1;
         // Insert the series and ensure it doesn't already exist
         require!(
@@ -42,7 +42,7 @@ impl Contract {
                         }),
                         owner_id: caller,
                         price: price.map(|p| p.into()),
-                        badge_type: SeriesType::from(badge_type)
+                        series_type: SeriesType::from(series_type)
                     }
                 )
                 .is_none(),
@@ -73,7 +73,7 @@ impl Contract {
 
     /// NFT Mint for implicit accounts
     /// The series ID must exist and if the metadata specifies a copy limit, you cannot exceed it.
-    pub fn mint_badge(&mut self, id: U64, receiver_id: AccountId, signature: Vec<u8>) {
+    pub fn mint_badge(&mut self, series_id: u64, receiver_id: AccountId, signature: Vec<u8>) {
         let current_receiver_nonce = self.get_nonce(&receiver_id);
 
         // verify that `nonce` was signed by owner.
@@ -94,7 +94,7 @@ impl Contract {
         if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
             let initial_storage_usage = env::storage_usage();
 
-            self.mint_helper(id, receiver_id.clone());
+            self.mint_helper(series_id, receiver_id.clone());
 
             let current_storage = env::storage_usage();
             let storage_used = current_storage - initial_storage_usage;
@@ -108,8 +108,13 @@ impl Contract {
         }
     }
 
-
-    pub fn batch_mint(&mut self, id: U64, amount: u8, receiver_id: AccountId, signature: Vec<u8>) {
+    pub fn batch_mint(
+        &mut self,
+        series_id: u64,
+        amount: u8,
+        receiver_id: AccountId,
+        signature: Vec<u8>,
+    ) {
         let current_receiver_nonce = self.get_nonce(&receiver_id);
 
         // verify that `nonce` was signed by owner.
@@ -129,7 +134,7 @@ impl Contract {
 
         if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
             for _i in 0..amount {
-                self.mint_helper(id, receiver_id.clone());
+                self.mint_helper(series_id, receiver_id.clone());
             }
             self.nonces.insert(&receiver_id, &receiver_next_nonce);
         } else {
@@ -172,12 +177,12 @@ impl Contract {
         }
     }
 
-    fn mint_helper(&mut self, series_id: U64, receiver_id: AccountId) {
+    fn mint_helper(&mut self, series_id: u64, receiver_id: AccountId) {
         // Get the series and how many tokens currently exist (edition number = cur_len + 1)
-        let mut series = self.series_by_id.get(&series_id.0).expect("Not a series");
+        let mut series = self.series_by_id.get(&series_id).expect("Not a series");
 
         let cur_len = series.tokens.len();
-        // Ensure we haven't overflowed on the number of copies minted
+        // // Ensure we haven't overflowed on the number of copies minted
         if let Some(copies) = series.metadata.copies {
             require!(
                 cur_len < copies,
@@ -185,24 +190,20 @@ impl Contract {
             );
         }
 
-        // The token ID is stored internally as `${series_id}:${edition}`
-        let token_id = format!("{}:{}", series_id.0, cur_len + 1);
+        // // The token ID is stored internally as `${series_id}:${edition}`
+        let token_id = format!("{}:{}", series_id, cur_len + 1);
         series.tokens.insert(&token_id);
-        self.series_by_id.insert(&series_id.0, &series);
-
-        //specify the token struct that contains the owner ID
-        let mut approved_account_ids = HashMap::new();
-        approved_account_ids.insert(self.owner_id.clone(), 0);
+        self.series_by_id.insert(&series_id, &series);
 
         let token = Token {
             // Series ID that the token belongs to
-            series_id: series_id.0,
+            series_id: series_id,
             //set the owner ID equal to the receiver ID passed into the function
             owner_id: receiver_id.clone(),
             //we set the approved account IDs to the default value (an empty map)
-            approved_account_ids: approved_account_ids,
+            approved_account_ids: HashMap::new(),
             //the next approval ID is set to 0
-            next_approval_id: 1,
+            next_approval_id: 0,
         };
 
         //insert the token ID and token struct and make sure that the token doesn't exist
@@ -230,8 +231,6 @@ impl Contract {
                 memo: None,
             }]),
         };
-
-        //update nonce
 
         // Log the serialized json.
         env::log_str(&nft_mint_log.to_string());

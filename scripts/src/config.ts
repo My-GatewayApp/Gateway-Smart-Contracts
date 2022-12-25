@@ -52,8 +52,7 @@ export async function getConfig(): Promise<GatewayConfig> {
                 "add_approved_creator",
                 "remove_approved_creator",
                 "nft_transfer_payout",
-                "create_badge_collection",//private
-                "create_series",
+                "create_series",//private
                 "update_badge_collection_media",
                 "nft_mint",
                 "mint_badge",
@@ -64,7 +63,7 @@ export async function getConfig(): Promise<GatewayConfig> {
                 "nft_total_supply",
                 "nft_tokens",
                 "nft_supply_for_owner",
-                "nft_tokens_for_owner",
+                "all_nft_tokens_for_owner",
                 "get_series_total_supply",
                 "get_series",
                 "get_series_details",
@@ -98,7 +97,7 @@ export async function getConfig(): Promise<GatewayConfig> {
                 "nft_total_supply",
                 "nft_tokens",
                 "nft_supply_for_owner",
-                "nft_tokens_for_owner",
+                "all_nft_tokens_for_owner",
                 "get_series_total_supply",
                 "get_series",
                 "get_series_details",

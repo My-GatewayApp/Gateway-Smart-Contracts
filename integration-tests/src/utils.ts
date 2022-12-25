@@ -20,7 +20,7 @@ export async function createBadgeCollection(
 
     return await user.call(
         contract,
-        "create_badge_collection",
+        "create_series",
         new_badge_payload
     )
 }
@@ -43,7 +43,7 @@ export async function createBadgeCollectionRaw(
 
     return await user.callRaw(
         contract,
-        "create_badge_collection",
+        "create_series",
         new_badge_payload
     )
 }
@@ -52,7 +52,7 @@ export async function authorizedNFTMint(
     root: NearAccount,
     user: NearAccount,
     contract: NearAccount,
-    seriesId: string,
+    seriesId: number,
 ) {
     //get current user nonce
     const nonce = await contract.call(contract, "get_nonce", {
@@ -85,7 +85,7 @@ export async function authorizedBatchNFTMint(
     root: NearAccount,
     user: NearAccount,
     contract: NearAccount,
-    seriesId: string,
+    seriesId: number,
     amount: number
 ) {
     //get current user nonce
@@ -109,7 +109,7 @@ export async function authorizedBatchNFTMint(
     // try to mint nft using wrong permission 
     //make an authorized mint
     return await user.callRaw(contract, "batch_mint", {
-        id: seriesId,
+        series_id: seriesId,
         receiver_id: user.accountId,
         signature: Array.from(signedMessage!.signature),
         amount

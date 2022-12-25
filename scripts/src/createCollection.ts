@@ -13,8 +13,9 @@ async function createCollection() {
 
     const nearConnection = await connect(config);
     const adminAccount = await nearConnection.account(contractAccountId);
-
     const { publicKey: adminPublicKey } = await loadAdminKeys();
+
+
 
     try {
         await adminAccount.functionCall({
@@ -31,7 +32,7 @@ async function createCollection() {
     }
 
     const new_badge_payload = {
-        badge_type: 1,
+        series_type: 1,
         metadata: {
             title: 'Blue badge',
             description: "first level badge in the gateway nft collection",
@@ -55,7 +56,7 @@ async function createCollection() {
 
     await adminAccount.functionCall({
         contractId: contractAccountId,
-        methodName: "create_badge_collection",
+        methodName: "create_series",
         args: {
             ...new_badge_payload
         }

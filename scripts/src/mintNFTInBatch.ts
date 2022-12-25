@@ -22,7 +22,7 @@ async function mintNFTInBatch() {
 
     // add key
     const adminAccount = await nearConnection.account(contractAccountId);
-    // await adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, parseNearAmount('0.1'))
+    await adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, parseNearAmount('0.1'))
 
     const keypair = KeyPair.fromString(secretKey);
     const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
@@ -37,7 +37,7 @@ async function mintNFTInBatch() {
         contractId: contractAccountId,
         methodName: "batch_mint",
         args: {
-            id: "12",
+            series_id: 12,
             amount: 5,
             receiver_id: userAccountId,
             signature: signature

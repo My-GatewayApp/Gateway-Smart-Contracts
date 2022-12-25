@@ -17,15 +17,15 @@ async function mintNFT() {
     const nearConnection = await connect(config);
 
 
-    
-    
+
+
     const { seedPhrase, publicKey, secretKey } = generateSeedPhrase();
     console.log({ seedPhrase, publicKey, secretKey });
-    
+
     // add key
     const adminAccount = await nearConnection.account(contractAccountId);
     await adminAccount.addKey(publicKey, contractAccountId, config.accessKeyMethods.changeMethods, parseNearAmount('0.1'))
-    
+
     const keypair = KeyPair.fromString(secretKey);
     const userAccountId = Buffer.from(keypair.getPublicKey().data).toString('hex');
 
@@ -34,12 +34,12 @@ async function mintNFT() {
 
     const signature = await generateAdminSignature(newUserAcct,);
 
-    
+
     await newUserAcct.functionCall({
         contractId: contractAccountId,
         methodName: "mint_badge",
         args: {
-            id: "11",
+            series_id: 11,
             receiver_id: userAccountId,
             signature: signature
         },

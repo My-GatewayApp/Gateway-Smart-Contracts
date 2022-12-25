@@ -76,7 +76,7 @@ test("should not allow unauthorized Badge creation", async (t) => {
 
   const result = await createBadgeCollectionRaw(alice, contract)
 
-  t.regex(result.receiptFailureMessages.join("\n"), /Method create_badge_collection is private+/);
+  t.regex(result.receiptFailureMessages.join("\n"), /Method create_series is private+/);
 })
 test('should create a new badge collection', async (t) => {
   const { root, contract, } = t.context.accounts;
@@ -124,7 +124,7 @@ test('should create a new badge collection', async (t) => {
 test('should not allow unauthorized nft mint', async (t) => {
   const { _, contract, alice } = t.context.accounts;
 
-  const seriesId = "1";
+  const seriesId = 1;
   //get current user nonce
   const nonce = await alice.call(contract, "get_nonce", {
     account_id: alice.accountId
@@ -165,7 +165,7 @@ test('should allow authorized nft mint', async (t) => {
     root,
     alice,
     contract,
-    "1",
+    1,
   )
 
   const nftTotalSupply = await contract.view("nft_total_supply")
@@ -198,7 +198,7 @@ test('should allow authorized batch nft mint', async (t) => {
     root,
     alice,
     contract,
-    "1",
+    1,
     5
   )
 
@@ -230,9 +230,9 @@ test("should burn nft ", async (t) => {
     root,
     alice,
     contract,
-    "1",
+    1,
   )
-  const aliceNFTs: any = await contract.view("nft_tokens_for_owner", {
+  const aliceNFTs: any = await contract.view("all_nft_tokens_for_owner", {
     account_id: alice.accountId,
   })
 
@@ -263,7 +263,7 @@ test("supply burn nft in batches", async (t) => {
     root,
     alice,
     contract,
-    "1",
+    1,
     4
   )
 
@@ -287,10 +287,10 @@ test("supply burn nft in batches", async (t) => {
   t.assert(newBadgeTotalSupply == "4")
 
 
- const result = await authorizedNFBatchTBurn(alice, contract, 1, 2);
+  const result = await authorizedNFBatchTBurn(alice, contract, 1, 2);
 
-  
-  
+
+
   nftTotalSupply = await contract.view("nft_total_supply")
   nftSupplyForOwner = await contract.view("nft_supply_for_owner", {
     account_id: alice.accountId,
@@ -317,7 +317,7 @@ test("reject update Badge media update for unauthorized acct", async (t) => {
 
   await createBadgeCollection(root, contract)
 
-  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, 1,)
 
   const newMediaUrl = "https://news.artnet.com/app/news-upload/2021/09/Yuga-Labs-Bored-Ape-Yacht-Club-4466.jpg";
   hash.update(newMediaUrl);
@@ -339,7 +339,7 @@ test("allow update Badge media update for authorized acct", async (t) => {
 
   await createBadgeCollection(root, contract)
 
-  await authorizedNFTMint(root, alice, contract, "1",)
+  await authorizedNFTMint(root, alice, contract, 1,)
 
   const newMediaUrl = "https://news.artnet.com/app/news-upload/2021/09/Yuga-Labs-Bored-Ape-Yacht-Club-4466.jpg";
   hash.update(newMediaUrl);
@@ -350,7 +350,7 @@ test("allow update Badge media update for authorized acct", async (t) => {
     media: newMediaUrl,
     media_hash: (newMediaHash)
   })
-  const aliceNFTs: any = await contract.view("nft_tokens_for_owner", {
+  const aliceNFTs: any = await contract.view("all_nft_tokens_for_owner", {
     account_id: alice.accountId,
   })
 
@@ -364,9 +364,9 @@ test("should get user tokens by badge(series) type", async (t) => {
   await createBadgeCollection(root, contract)
   await createBadgeCollection(root, contract)
 
-  await authorizedNFTMint(root, alice, contract, "1",)
-  await authorizedNFTMint(root, alice, contract, "2",)
-  await authorizedNFTMint(root, alice, contract, "2",)
+  await authorizedNFTMint(root, alice, contract, 1,)
+  await authorizedNFTMint(root, alice, contract, 2,)
+  await authorizedNFTMint(root, alice, contract, 2,)
 
   let aliceBadge1Tokens = await contract.view("badge_token_supply_for_owner", {
     series_id: 1,

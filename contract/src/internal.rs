@@ -153,7 +153,7 @@ impl Contract {
             .owner_tokens_per_series
             .get(account_id)
             .unwrap_or_else(|| {
-                LookupMap::new(StorageKey::OwnerTokensPerSeriesInner {
+                UnorderedMap::new(StorageKey::OwnerTokensPerSeriesInner {
                     account_id_hash: hash_account_id(&account_id.to_string()),
                 })
             });
@@ -161,7 +161,8 @@ impl Contract {
         let current_count = owner_tokens_per_series.get(&token.series_id).unwrap_or(0);
 
         owner_tokens_per_series.insert(&token.series_id, &(current_count + 1));
-        self.owner_tokens_per_series.insert(account_id, &owner_tokens_per_series);
+        self.owner_tokens_per_series
+            .insert(account_id, &owner_tokens_per_series);
     }
 
     //remove a token from an owner (internal method and can't be called directly via CLI).
@@ -170,7 +171,6 @@ impl Contract {
         account_id: &AccountId,
         token_id: &TokenId,
     ) {
-
         //we get the set of tokens that the owner has
         let mut tokens_set = self
             .tokens_per_owner
@@ -183,10 +183,13 @@ impl Contract {
 
         //update the number of tokens that the owner has in the current series
         let token = self.nft_token(token_id.clone()).unwrap();
-        let mut current_owner_tokens_per_series = self.owner_tokens_per_series.get(&account_id).unwrap();
-        let current_series_count = current_owner_tokens_per_series.get(&token.series_id).unwrap();
+        let mut current_owner_tokens_per_series =
+            self.owner_tokens_per_series.get(&account_id).unwrap();
+        let current_series_count = current_owner_tokens_per_series
+            .get(&token.series_id)
+            .unwrap();
         current_owner_tokens_per_series.insert(&token.series_id, &(current_series_count - 1));
-    
+
         //if the token set is now empty, we remove the owner from the tokens_per_owner collection
         if tokens_set.is_empty() {
             self.tokens_per_owner.remove(account_id);
@@ -194,8 +197,9 @@ impl Contract {
         } else {
             //if the token set is not empty, we simply insert it back for the account ID.
             self.tokens_per_owner.insert(account_id, &tokens_set);
-            self.owner_tokens_per_series.insert(&account_id, &current_owner_tokens_per_series);
-         }
+            self.owner_tokens_per_series
+                .insert(&account_id, &current_owner_tokens_per_series);
+        }
     }
 
     //transfers the NFT to the receiver_id (internal method and can't be called directly via CLI).
