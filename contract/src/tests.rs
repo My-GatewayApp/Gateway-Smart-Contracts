@@ -44,17 +44,23 @@ fn test_default() {
 fn test_new_account_contract() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
     testing_env!(context.is_view(true).build());
     let contract_nft_tokens = contract.nft_tokens(Some(U128(0)), None);
     assert_eq!(contract_nft_tokens.len(), 0);
 }
-#[test]            
+#[test]
 #[should_panic(expected = "only approved creators can add a new badge collection")]
 fn test_create_badge_with_wrong_acct_collection() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     let token_metadata: TokenMetadata = sample_token_metadata();
     testing_env!(context.predecessor_account_id(accounts(1)).build());
@@ -64,7 +70,10 @@ fn test_create_badge_with_wrong_acct_collection() {
 fn test_create_series() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     testing_env!(context.predecessor_account_id(accounts(0)).build());
     let series_id = 1;
@@ -77,12 +86,14 @@ fn test_create_series() {
     assert_eq!(created_series.owner_id, accounts(0))
 }
 
-
 #[test]
 fn test_mint_badge() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     testing_env!(context.predecessor_account_id(accounts(0)).build());
     let series_id = 1;
@@ -105,13 +116,14 @@ fn test_mint_badge() {
     assert_eq!(owner_badges_in_collection.len(), 1);
 }
 
-
-
 #[test]
 pub fn test_update_series_media() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     testing_env!(context.predecessor_account_id(accounts(0)).build());
     let series_id = 1;
@@ -142,7 +154,10 @@ pub fn test_update_series_media() {
 fn test_fail_get_badge_series_by_type() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     testing_env!(context.predecessor_account_id(accounts(0)).build());
 
@@ -156,7 +171,10 @@ fn test_fail_get_badge_series_by_type() {
 fn test_get_badge_series_by_type() {
     let mut context = get_context(accounts(0));
     testing_env!(context.build());
-    let mut contract = Contract::new_default_meta(accounts(0).into(), "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string());
+    let mut contract = Contract::new_default_meta(
+        accounts(0).into(),
+        "8QoJVEQAstCiSU4osfagAMZQqUpoYnvj1K8kgczhSE4e".to_string(),
+    );
 
     testing_env!(context.predecessor_account_id(accounts(0)).build());
 
@@ -170,4 +188,10 @@ fn test_get_badge_series_by_type() {
 
     assert_eq!(series_1.len(), 1);
     assert_eq!(series_2.len(), 1);
+}
+
+#[test]
+fn test_test() {
+    let acctId = AccountId::new_unchecked((&"unrecoverable_burn_account").to_string());
+    println!("{}", acctId);
 }

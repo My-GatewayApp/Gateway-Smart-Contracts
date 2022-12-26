@@ -115,25 +115,14 @@ impl Contract {
     fn burn_helper(&mut self, token_id: TokenId, owner_id: AccountId) {
         let token = self.tokens_by_id.get(&token_id).expect("No token");
 
-        let series = self.series_by_id.get(&token.series_id);
+        self.internal_transfer(
+            &owner_id,
+            &AccountId::new_unchecked((&"unrecoverable_burn_account").to_string()),
+            &token_id,
+            None,
+            None,
+        );
 
-        if let Some(mut series) = series {
-            series.tokens.remove(&token_id);
-            self.series_by_id.insert(&token.series_id, &series);
-        }
-        // remove from tokens_per_owner and owner_tokens_per_series
-        self.internal_remove_token_from_owner(&owner_id, &token_id);
-        //remove tokens from tokens_by_id map
-        self.tokens_by_id.remove(&token_id);
-
-        let mut series = self.series_by_id.get(&token.series_id).unwrap();
-
-        if series.series_type.to_code() == SeriesType::LIMITED.to_code() {
-            // reduce copies count to avoid re-mint
-            let new_copies = series.metadata.copies.unwrap();
-            series.metadata.copies = new_copies.checked_sub(1);
-            self.series_by_id.insert(&token.series_id, &series);
-        }
         let nft_burn_log: EventLog = EventLog {
             // Standard name ("nep171").
             standard: NFT_STANDARD_NAME.to_string(),

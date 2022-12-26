@@ -227,7 +227,7 @@ impl Contract {
 
         let cur_len = series.tokens.len();
         // // Ensure we haven't overflowed on the number of copies minted
-        if let Some(copies) = series.metadata.copies {
+        if let Some(copies) = series.metadata.copies.clone() {
             require!(
                 cur_len < copies,
                 "cannot mint anymore NFTs for the given series. Limit reached"
