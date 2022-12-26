@@ -128,13 +128,13 @@ impl Contract {
     }
 
     // get info for a specific series
-    pub fn get_series_details(&self, id: u64) -> Option<JsonSeries> {
+    pub fn get_series_details(&self, series_id: u64) -> Option<JsonSeries> {
         //get the series from the map
-        let series = self.series_by_id.get(&id);
+        let series = self.series_by_id.get(&series_id);
         //if there is some series, we'll return the series
         if let Some(series) = series {
             Some(JsonSeries {
-                series_id: id,
+                series_id,
                 metadata: series.metadata,
                 royalty: series.royalty,
                 owner_id: series.owner_id,
@@ -231,7 +231,7 @@ impl Contract {
         let number_of_tokens_in_series_owned = self
             .owner_tokens_per_series
             .get(&account_id)
-            .expect("Owner does not have any nft yet")
+            .unwrap_or(UnorderedMap::new(b"0"))
             .get(&series_id)
             .unwrap_or(0);
         U128(number_of_tokens_in_series_owned.into())
@@ -241,7 +241,7 @@ impl Contract {
     pub fn owner_nft_dashboard(&self, account_id: AccountId) -> Vec<OwnerDashboardJson> {
         self.owner_tokens_per_series
             .get(&account_id)
-            .expect("Owner does not have any nft yet")
+            .unwrap_or(UnorderedMap::new(b"0"))
             .iter()
             .map(|(series_id, count)| {
                 let json_series = self.get_series_details(series_id).unwrap();

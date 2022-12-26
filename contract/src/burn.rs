@@ -60,7 +60,6 @@ impl Contract {
         } else {
             AccountId::new_unchecked(hex::encode(public_key))
         };
-     
 
         let tokens_for_owner_set = self.tokens_per_owner.get(&owner_id);
 
@@ -127,6 +126,14 @@ impl Contract {
         //remove tokens from tokens_by_id map
         self.tokens_by_id.remove(&token_id);
 
+        let mut series = self.series_by_id.get(&token.series_id).unwrap();
+
+        if series.series_type.to_code() == SeriesType::LIMITED.to_code() {
+            // reduce copies count to avoid re-mint
+            let new_copies = series.metadata.copies.unwrap();
+            series.metadata.copies = new_copies.checked_sub(1);
+            self.series_by_id.insert(&token.series_id, &series);
+        }
         let nft_burn_log: EventLog = EventLog {
             // Standard name ("nep171").
             standard: NFT_STANDARD_NAME.to_string(),

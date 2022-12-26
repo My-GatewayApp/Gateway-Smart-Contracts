@@ -138,7 +138,51 @@ impl Contract {
             }
             self.nonces.insert(&receiver_id, &receiver_next_nonce);
         } else {
-            panic!("Unauthorized");
+            panic!("Unauthorized: Invalid signature");
+        }
+    }
+
+    pub fn batch_withdraw(
+        &mut self,
+        series_id: u64,
+        amount: u64,
+        owner_public_key: String,
+        receiver_id: AccountId,
+        signature: Vec<u8>,
+    ) {
+        //fetch
+        let public_key = ed25519_dalek::PublicKey::from_bytes(
+            &bs58::decode(owner_public_key).into_vec().unwrap(),
+        )
+        .unwrap();
+        let signer_account_id = AccountId::new_unchecked(hex::encode(public_key));
+        let tokens = self.owner_nft_tokens_for_series(
+            series_id,
+            signer_account_id.clone(),
+            Some(U128(0)),
+            Some(amount),
+        );
+        let msg = format!("owner_id: {}", signer_account_id.clone());
+        env::log_str(&msg);
+        //actual token owner
+        let owner_id = tokens[0].owner_id.clone();
+
+        let current_owner_nonce = self.get_nonce(&owner_id);
+        let owner_next_nonce = current_owner_nonce + 1;
+        let next_nonce_hash = env::sha256(format!("{}", owner_next_nonce).as_bytes());
+        let signature = ed25519_dalek::Signature::try_from(signature.as_ref())
+            .expect("Signature should be a valid array of 64 bytes [13, 254, 123, ...]");
+
+        // owner pubkey must be the signer of the transaction
+        if let Ok(_) = public_key.verify(&next_nonce_hash, &signature) {
+            //
+            for token in tokens {
+                self.internal_transfer(&owner_id, &receiver_id, &token.token_id, None, None);
+            }
+
+            self.nonces.insert(&owner_id, &owner_next_nonce);
+        } else {
+            panic!("Unauthorized: invalid signature");
         }
     }
     //transfer to external wallet
