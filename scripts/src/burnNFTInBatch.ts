@@ -16,7 +16,7 @@ async function burnNFTInBatch() {
     const { config, contractAccountId } = gatewayConfig
     const nearConnection = await connect(config);
 
-    let userSeedPhrase = "horror swallow height behave defense scare mobile ready deer margin brick unveil"
+    let userSeedPhrase = process.env.USER_SEED_PHRASE || ""
     let series_id = 12;
     let amount = 5;
 

@@ -22,6 +22,7 @@ test.beforeEach(async (t) => {
   await root.deploy(
     gatewayNftMarketplaceLocation,
   )
+  
   const ownerKeyPair = await root.getKey();
   const owner_public_key = ownerKeyPair?.getPublicKey().toString().split(":")[1];
 

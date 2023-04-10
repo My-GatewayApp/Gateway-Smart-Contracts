@@ -40,7 +40,6 @@ const fs_1 = __importDefault(require("fs"));
 const nearAPI = __importStar(require("near-api-js"));
 const config_1 = require("./config");
 const { connect } = nearAPI;
-nearAPI.Account;
 function deploy() {
     return __awaiter(this, void 0, void 0, function* () {
         const { config, contractAccountId } = yield (0, config_1.getConfig)();

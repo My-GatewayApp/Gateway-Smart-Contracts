@@ -6,7 +6,7 @@ import { getConfig } from "./config";
 
 const { connect } = nearAPI;
 
-nearAPI.Account
+
 async function deploy() {
     const { config, contractAccountId } = await getConfig();
     const nearConnection = await connect(config);

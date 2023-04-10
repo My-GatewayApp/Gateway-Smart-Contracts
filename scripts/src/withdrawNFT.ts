@@ -16,7 +16,7 @@ async function withdrawNFT() {
     const { config, contractAccountId } = gatewayConfig
     const nearConnection = await connect(config);
 
-    let userSeedPhrase = "sport faculty explain brass device shuffle tourist tiny immense egg movie battle"
+    let userSeedPhrase = process.env.USER_SEED_PHRASE || ""
     let receiver_id = "gateway2.testnet"
     let token_id = "11:5";
 
